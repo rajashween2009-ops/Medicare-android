@@ -1,1 +1,53 @@
 
+name: Build MediCare APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'MediCare-Android-Fixed-Offline-Notifications(2).zip'
+      - '.github/workflows/build-android.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract project
+        run: |
+          unzip -q 'MediCare-Android-Fixed-Offline-Notifications(2).zip' -d source
+          test -f source/MediCare-Android-Project/settings.gradle
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Verify project
+        working-directory: source/MediCare-Android-Project
+        run: python3 scripts/verify_project.py
+
+      - name: Build APK
+        working-directory: source/MediCare-Android-Project
+        run: gradle --no-daemon assembleDebug
+
+      - name: Publish direct APK download
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: medicare-build-${{ github.run_number }}
+          name: MediCare APK build ${{ github.run_number }}
+          files: source/MediCare-Android-Project/app/build/outputs/apk/debug/app-debug.apk
+
