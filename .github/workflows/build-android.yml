@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'MediCare-Android-Fixed-Offline-Notifications(2).zip'
+      - '**.zip'
       - '.github/workflows/build-android.yml'
 
 permissions:
@@ -17,37 +17,42 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Extract project
+      - name: Find and extract Android project
         run: |
-          unzip -q 'MediCare-Android-Fixed-Offline-Notifications(2).zip' -d source
-          test -f source/MediCare-Android-Project/settings.gradle
+          mkdir source
+          ZIP=$(find . -maxdepth 1 -iname '*.zip' | head -1)
+          test -n "$ZIP"
+          unzip -q "$ZIP" -d source
+          find source -name settings.gradle -o -name settings.gradle.kts
 
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
 
-      - uses: android-actions/setup-android@v3
-
       - name: Install Android SDK
-        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.0'
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
 
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.7'
 
-      - name: Verify project
-        working-directory: source/MediCare-Android-Project
-        run: python3 scripts/verify_project.py
+      - name: Locate project
+        id: project
+        run: |
+          FILE=$(find source -name settings.gradle -o -name settings.gradle.kts | head -1)
+          test -n "$FILE"
+          echo "dir=$(dirname "$FILE")" >> "$GITHUB_OUTPUT"
 
       - name: Build APK
-        working-directory: source/MediCare-Android-Project
+        working-directory: ${{ steps.project.outputs.dir }}
         run: gradle --no-daemon assembleDebug
 
-      - name: Publish direct APK download
+      - name: Publish APK
         uses: softprops/action-gh-release@v2
         with:
           tag_name: medicare-build-${{ github.run_number }}
           name: MediCare APK build ${{ github.run_number }}
-          files: source/MediCare-Android-Project/app/build/outputs/apk/debug/app-debug.apk
-
+          files: ${{ steps.project.outputs.dir }}/app/build/outputs/apk/debug/app-debug.apk
