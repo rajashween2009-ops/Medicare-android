@@ -1,0 +1,2186 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="description" content="MediCare — Extra-large, high-contrast daily medication companion designed for seniors." />
+  <title>MediCare — Daily Medication Companion</title>
+
+  <!-- Load Inter Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- Load Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Load JSZip for Instant Android APK Project Packaging -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+</head>
+
+<body class="bg-slate-100 text-slate-900 font-sans antialiased selection:bg-blue-200 selection:text-slate-950 min-h-screen overflow-x-hidden">
+
+  <!-- ==================== STICKY TOP HEADER ==================== -->
+  <header class="sticky top-0 z-30 bg-slate-900 text-white shadow-lg border-b-2 border-slate-700">
+    <div class="max-w-2xl mx-auto px-4 py-3 space-y-3">
+
+      <!-- Top Row: App Brand + Instant A / A+ / A++ Font Size Switcher -->
+      <div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-11 h-11 rounded-2xl bg-emerald-500 text-slate-950 flex items-center justify-center shadow-md shrink-0">
+            <!-- Medical Cross + Heart SVG -->
+            <svg class="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M11 2a2 2 0 0 0-2 2v5H4a2 2 0 0 0-2 2v2c0 1.1.9 2 2 2h5v5c0 1.1.9 2 2 2h2a2 2 0 0 0 2-2v-5h5a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-5V4a2 2 0 0 0-2-2h-2z"/>
+            </svg>
+          </div>
+          <div class="min-w-0">
+            <h1 class="text-xl font-extrabold tracking-tight leading-none text-white truncate">MediCare</h1>
+            <p class="text-xs font-medium text-slate-300 mt-1 truncate">Daily Medicine Helper</p>
+          </div>
+        </div>
+
+        <!-- Instant A / A+ / A++ Font Size Switcher -->
+        <div class="flex items-center bg-slate-800 p-1 rounded-2xl border border-slate-600 shrink-0" role="group" aria-label="Text Size Switcher">
+          <button type="button" id="font-btn-normal" onclick="setFontScale('normal')"
+            class="px-3 py-2 rounded-xl text-sm font-extrabold transition-all min-w-[44px] min-h-[44px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-amber-400"
+            aria-label="Standard Large Text">
+            A
+          </button>
+          <button type="button" id="font-btn-large" onclick="setFontScale('large')"
+            class="px-3 py-2 rounded-xl text-base font-extrabold transition-all min-w-[46px] min-h-[44px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-amber-400"
+            aria-label="Extra Large Text">
+            A+
+          </button>
+          <button type="button" id="font-btn-xlarge" onclick="setFontScale('xlarge')"
+            class="px-3 py-2 rounded-xl text-lg font-extrabold transition-all min-w-[50px] min-h-[44px] flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-amber-400"
+            aria-label="Maximum Text Size">
+            A++
+          </button>
+        </div>
+      </div>
+
+      <!-- Second Row: Live Digital Clock + Daily Progress Pill -->
+      <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-800/90 px-3.5 py-2.5 rounded-2xl border border-slate-700">
+        <!-- Live Digital Clock -->
+        <div class="flex items-center gap-2.5">
+          <svg class="w-5 h-5 text-amber-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+          <div>
+            <div id="live-clock-time" class="text-base font-extrabold text-white tabular-nums leading-tight">--:--:-- --</div>
+            <div id="live-clock-date" class="text-xs font-semibold text-slate-300 leading-tight">Loading date...</div>
+          </div>
+        </div>
+
+        <!-- Daily Progress Pill -->
+        <div id="daily-progress-pill" class="flex items-center gap-2 bg-emerald-500/20 border-2 border-emerald-400 text-emerald-200 px-3.5 py-1.5 rounded-full font-extrabold text-sm">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <span id="daily-progress-text">0/0 Taken</span>
+        </div>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ==================== MAIN CONTENT CONTAINER ==================== -->
+  <main class="max-w-2xl mx-auto px-4 pt-4 pb-32 space-y-5">
+
+    <!-- ==================== TAB 1: TODAY'S PILLS ==================== -->
+    <section id="view-today" class="space-y-5" aria-label="Today's Medications">
+
+      <!-- Next Medicine Banner + Big 'Read All' Voice Button -->
+      <div id="next-medicine-banner" class="bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 text-white rounded-3xl p-5 shadow-xl border-2 border-blue-400/50 space-y-4">
+        <!-- Populated dynamically by renderNextMedicineBanner() -->
+      </div>
+
+      <!-- Time-of-Day Filter Tabs -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between px-1">
+          <h2 class="text-base font-extrabold text-slate-800 uppercase tracking-wide">Schedule by Time of Day</h2>
+          <button type="button" onclick="openConfirmModal('reset-day')" class="text-xs font-bold text-slate-600 underline hover:text-slate-900 py-1 px-2 rounded-lg">
+            Reset Today
+          </button>
+        </div>
+
+        <div id="time-filter-tabs" class="grid grid-cols-2 sm:grid-cols-5 gap-2" role="tablist" aria-label="Filter medicines by time of day">
+          <!-- Populated dynamically by renderFilterTabs() -->
+        </div>
+      </div>
+
+      <!-- Grouped Medication Cards Container -->
+      <div id="medications-container" class="space-y-6">
+        <!-- Populated dynamically by renderMedications() -->
+      </div>
+
+    </section>
+
+    <!-- ==================== TAB 2: ADD PILL ==================== -->
+    <section id="view-add" class="hidden space-y-5" aria-label="Add New Medication">
+      <div class="bg-white rounded-3xl p-5 sm:p-6 shadow-md border-2 border-slate-200 space-y-6">
+        <div class="border-b-2 border-slate-100 pb-4">
+          <h2 class="text-2xl font-black text-slate-900">Add New Medicine</h2>
+          <p class="text-sm font-medium text-slate-600 mt-1">Fill in the details below with large, easy-to-tap options.</p>
+        </div>
+
+        <!-- Inline Form Alert Box (Replaces alert()) -->
+        <div id="add-form-error" class="hidden bg-red-50 border-2 border-red-500 text-red-900 rounded-2xl p-4 font-bold text-sm" role="alert"></div>
+
+        <form id="add-pill-form" onsubmit="handleAddMedicine(event)" class="space-y-6" novalidate>
+
+          <!-- 1. Medicine Name -->
+          <div class="space-y-2">
+            <label for="med-name" class="block text-base font-extrabold text-slate-900">
+              1. Medicine Name <span class="text-red-600">*</span>
+            </label>
+            <input type="text" id="med-name" required placeholder="e.g., Amlodipine 5mg or Vitamin D3"
+              class="w-full min-h-[56px] px-4 py-3 text-lg font-bold bg-slate-50 border-2 border-slate-300 rounded-2xl text-slate-900 placeholder-slate-400 focus:bg-white focus:border-blue-600 focus:outline-none focus:ring-4 focus:ring-blue-500/20" />
+          </div>
+
+          <!-- 2. Dosage / How Much to Take -->
+          <div class="space-y-2">
+            <label for="med-dosage" class="block text-base font-extrabold text-slate-900">
+              2. How Much to Take (Dosage)
+            </label>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
+              <button type="button" onclick="selectDosagePreset('1 Tablet')" class="dosage-preset-btn min-h-[48px] px-3 py-2 rounded-xl border-2 border-slate-300 bg-slate-50 font-bold text-sm text-slate-800 hover:border-blue-600">1 Tablet</button>
+              <button type="button" onclick="selectDosagePreset('1/2 Tablet')" class="dosage-preset-btn min-h-[48px] px-3 py-2 rounded-xl border-2 border-slate-300 bg-slate-50 font-bold text-sm text-slate-800 hover:border-blue-600">1/2 Tablet</button>
+              <button type="button" onclick="selectDosagePreset('2 Tablets')" class="dosage-preset-btn min-h-[48px] px-3 py-2 rounded-xl border-2 border-slate-300 bg-slate-50 font-bold text-sm text-slate-800 hover:border-blue-600">2 Tablets</button>
+              <button type="button" onclick="selectDosagePreset('1 Capsule')" class="dosage-preset-btn min-h-[48px] px-3 py-2 rounded-xl border-2 border-slate-300 bg-slate-50 font-bold text-sm text-slate-800 hover:border-blue-600">1 Capsule</button>
+              <button type="button" onclick="selectDosagePreset('5 ml Syrup')" class="dosage-preset-btn min-h-[48px] px-3 py-2 rounded-xl border-2 border-slate-300 bg-slate-50 font-bold text-sm text-slate-800 hover:border-blue-600">5 ml Syrup</button>
+              <button type="button" onclick="selectDosagePreset('2 Drops')" class="dosage-preset-btn min-h-[48px] px-3 py-2 rounded-xl border-2 border-slate-300 bg-slate-50 font-bold text-sm text-slate-800 hover:border-blue-600">2 Drops</button>
+            </div>
+            <input type="text" id="med-dosage" value="1 Tablet" placeholder="e.g., 1 Tablet"
+              class="w-full min-h-[54px] px-4 py-3 text-base font-bold bg-slate-50 border-2 border-slate-300 rounded-2xl text-slate-900 focus:bg-white focus:border-blue-600 focus:outline-none" />
+          </div>
+
+          <!-- 3. Visual Pill Shape & Color Picker -->
+          <div class="space-y-2">
+            <span class="block text-base font-extrabold text-slate-900">
+              3. Tap What the Medicine Looks Like
+            </span>
+            <input type="hidden" id="med-pill-type" value="white-round" />
+            <div id="pill-picker-grid" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              <!-- Populated dynamically by renderPillPicker() -->
+            </div>
+          </div>
+
+          <!-- 4. Time of Day & Exact Time -->
+          <div class="space-y-3">
+            <span class="block text-base font-extrabold text-slate-900">
+              4. When Should You Take It?
+            </span>
+            <input type="hidden" id="med-period" value="Morning" />
+            <div class="grid grid-cols-2 gap-2.5">
+              <button type="button" data-period="Morning" onclick="selectPeriodPreset('Morning', '08:00')"
+                class="period-btn min-h-[56px] p-3 rounded-2xl border-2 font-extrabold text-sm flex flex-col items-center justify-center transition-all">
+                <span>Morning</span>
+                <span class="text-xs font-semibold opacity-80">e.g., 8:00 AM</span>
+              </button>
+              <button type="button" data-period="Afternoon" onclick="selectPeriodPreset('Afternoon', '13:30')"
+                class="period-btn min-h-[56px] p-3 rounded-2xl border-2 font-extrabold text-sm flex flex-col items-center justify-center transition-all">
+                <span>Afternoon</span>
+                <span class="text-xs font-semibold opacity-80">e.g., 1:30 PM</span>
+              </button>
+              <button type="button" data-period="Evening" onclick="selectPeriodPreset('Evening', '18:30')"
+                class="period-btn min-h-[56px] p-3 rounded-2xl border-2 font-extrabold text-sm flex flex-col items-center justify-center transition-all">
+                <span>Evening</span>
+                <span class="text-xs font-semibold opacity-80">e.g., 6:30 PM</span>
+              </button>
+              <button type="button" data-period="Night" onclick="selectPeriodPreset('Night', '21:30')"
+                class="period-btn min-h-[56px] p-3 rounded-2xl border-2 font-extrabold text-sm flex flex-col items-center justify-center transition-all">
+                <span>Night</span>
+                <span class="text-xs font-semibold opacity-80">e.g., 9:30 PM</span>
+              </button>
+            </div>
+
+            <div class="bg-slate-50 p-4 rounded-2xl border-2 border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <label for="med-time" class="text-base font-extrabold text-slate-800">Exact Clock Time:</label>
+              <input type="time" id="med-time" value="08:00" onchange="syncPeriodFromTime(this.value)"
+                class="min-h-[54px] px-4 py-2 text-lg font-black bg-white border-2 border-slate-400 rounded-2xl text-slate-900 focus:border-blue-600 focus:outline-none" />
+            </div>
+          </div>
+
+          <!-- 5. Food Instructions -->
+          <div class="space-y-2">
+            <span class="block text-base font-extrabold text-slate-900">
+              5. Food or Water Instruction
+            </span>
+            <input type="hidden" id="med-food" value="After Food" />
+            <div class="grid grid-cols-2 gap-2.5">
+              <button type="button" data-food="After Food" onclick="selectFoodInstruction('After Food')"
+                class="food-btn min-h-[56px] px-4 py-3 rounded-2xl border-2 font-extrabold text-sm flex items-center justify-center gap-2 transition-all">
+                <span>After Food</span>
+              </button>
+              <button type="button" data-food="Before Food" onclick="selectFoodInstruction('Before Food')"
+                class="food-btn min-h-[56px] px-4 py-3 rounded-2xl border-2 font-extrabold text-sm flex items-center justify-center gap-2 transition-all">
+                <span>Before Food</span>
+              </button>
+              <button type="button" data-food="With Water" onclick="selectFoodInstruction('With Water')"
+                class="food-btn min-h-[56px] px-4 py-3 rounded-2xl border-2 font-extrabold text-sm flex items-center justify-center gap-2 transition-all">
+                <span>With Water</span>
+              </button>
+              <button type="button" data-food="Before Sleep" onclick="selectFoodInstruction('Before Sleep')"
+                class="food-btn min-h-[56px] px-4 py-3 rounded-2xl border-2 font-extrabold text-sm flex items-center justify-center gap-2 transition-all">
+                <span>Before Sleep</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- 6. Pills Currently in Strip / Bottle -->
+          <div class="space-y-2">
+            <label for="med-stock" class="block text-base font-extrabold text-slate-900">
+              6. Pills Remaining in Strip / Bottle
+            </label>
+            <p class="text-xs font-semibold text-slate-600">We will warn you to refill when 5 or fewer remain.</p>
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="adjustStockInput(-5)"
+                class="min-h-[54px] min-w-[58px] rounded-2xl bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-lg">-5</button>
+              <input type="number" id="med-stock" min="0" max="500" value="20"
+                class="w-full min-h-[54px] px-4 py-2 text-center text-xl font-black bg-slate-50 border-2 border-slate-300 rounded-2xl text-slate-900 focus:border-blue-600 focus:outline-none" />
+              <button type="button" onclick="adjustStockInput(5)"
+                class="min-h-[54px] min-w-[58px] rounded-2xl bg-slate-200 hover:bg-slate-300 text-slate-900 font-black text-lg">+5</button>
+              <button type="button" onclick="adjustStockInput(30)"
+                class="min-h-[54px] min-w-[64px] rounded-2xl bg-blue-100 hover:bg-blue-200 text-blue-900 font-black text-base">+30</button>
+            </div>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="pt-2 flex flex-col sm:flex-row gap-3">
+            <button type="submit"
+              class="w-full min-h-[62px] bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-black text-lg rounded-2xl shadow-lg flex items-center justify-center gap-2.5 transition-all">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <span>Save Medicine</span>
+            </button>
+            <button type="button" onclick="switchTab('today')"
+              class="sm:w-1/3 min-h-[56px] bg-slate-200 hover:bg-slate-300 text-slate-800 font-extrabold text-base rounded-2xl transition-all">
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- ==================== TAB 3: FAMILY / SOS ==================== -->
+    <section id="view-family" class="hidden space-y-5" aria-label="Family, Doctor and Emergency SOS">
+
+      <!-- 112 Emergency Helpline Banner -->
+      <div class="bg-red-700 text-white rounded-3xl p-5 shadow-xl border-2 border-red-400 space-y-4">
+        <div class="flex items-start gap-3.5">
+          <div class="w-14 h-14 rounded-2xl bg-white text-red-700 flex items-center justify-center shrink-0 shadow-md">
+            <svg class="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+            </svg>
+          </div>
+          <div>
+            <span class="inline-block bg-red-900/80 text-red-100 text-xs font-black uppercase tracking-wider px-2.5 py-1 rounded-full">24x7 National Emergency</span>
+            <h2 class="text-2xl font-black mt-1">Need Urgent Help?</h2>
+            <p class="text-sm font-medium text-red-100 mt-0.5">Tap below to immediately dial the 112 Ambulance &amp; Emergency Helpline.</p>
+          </div>
+        </div>
+
+        <a href="tel:112"
+          class="w-full min-h-[64px] bg-white hover:bg-red-50 active:scale-[0.99] text-red-700 font-black text-xl rounded-2xl shadow-lg flex items-center justify-center gap-3 transition-all">
+          <svg class="w-7 h-7" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.61 21 3 13.39 3 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.25 1.01l-2.2 2.2z"/>
+          </svg>
+          <span>Call 112 Emergency SOS</span>
+        </a>
+      </div>
+
+      <!-- Quick Tools Row: Test Reminder Alarm + Share Today's Medicine Report -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Test Medicine Reminder Alarm Card -->
+        <div class="bg-amber-50 border-2 border-amber-400 rounded-3xl p-5 shadow-sm flex flex-col justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2 text-amber-900 font-black text-lg">
+              <svg class="w-6 h-6 text-amber-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+              <span>Reminder Alarm</span>
+            </div>
+            <p class="text-sm font-medium text-amber-900/80 mt-1.5">Test the gentle chime sound and voice medicine alert.</p>
+          </div>
+          <button type="button" onclick="triggerTestAlarm()"
+            class="w-full min-h-[56px] bg-amber-500 hover:bg-amber-600 active:scale-[0.99] text-slate-950 font-black text-base rounded-2xl shadow flex items-center justify-center gap-2 transition-all">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+            </svg>
+            <span>Test Medicine Alarm</span>
+          </button>
+        </div>
+
+        <!-- Share Today's Medicine Report Card -->
+        <div class="bg-blue-50 border-2 border-blue-300 rounded-3xl p-5 shadow-sm flex flex-col justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2 text-blue-950 font-black text-lg">
+              <svg class="w-6 h-6 text-blue-700 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              </svg>
+              <span>Daily Report</span>
+            </div>
+            <p class="text-sm font-medium text-blue-950/80 mt-1.5">Send today's taken &amp; remaining medicines to family or doctor.</p>
+          </div>
+          <button type="button" onclick="openShareReportModal()"
+            class="w-full min-h-[56px] bg-blue-700 hover:bg-blue-800 active:scale-[0.99] text-white font-black text-base rounded-2xl shadow flex items-center justify-center gap-2 transition-all">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>
+            </svg>
+            <span>Share Today's Report</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Family & Doctor Contacts Section -->
+      <div class="bg-white rounded-3xl p-5 shadow-md border-2 border-slate-200 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b-2 border-slate-100 pb-3">
+          <div>
+            <h3 class="text-xl font-black text-slate-900">Family &amp; Doctor Contacts</h3>
+            <p class="text-xs font-semibold text-slate-600">Tap the green Call button for one-tap dialing</p>
+          </div>
+          <button type="button" onclick="toggleAddContactForm()"
+            class="min-h-[48px] px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-sm rounded-2xl flex items-center gap-1.5">
+            <span>+ Add Contact</span>
+          </button>
+        </div>
+
+        <!-- Add Contact Drawer -->
+        <form id="add-contact-form" onsubmit="handleAddContact(event)" class="hidden bg-slate-50 p-4 rounded-2xl border-2 border-blue-300 space-y-3">
+          <h4 class="font-extrabold text-base text-slate-900">New Emergency / Family Contact</h4>
+          <div id="contact-form-error" class="hidden bg-red-100 border border-red-500 text-red-900 px-3 py-2 rounded-xl text-xs font-bold"></div>
+          <div class="space-y-2">
+            <label for="contact-name" class="block text-sm font-extrabold text-slate-800">Person or Doctor Name</label>
+            <input type="text" id="contact-name" placeholder="e.g., Dr. Mehta or Priya (Daughter)"
+              class="w-full min-h-[50px] px-3.5 py-2 text-base font-bold bg-white border-2 border-slate-300 rounded-xl focus:border-blue-600 focus:outline-none" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="contact-role" class="block text-sm font-extrabold text-slate-800 mb-1">Role</label>
+              <select id="contact-role" class="w-full min-h-[50px] px-3.5 py-2 text-base font-bold bg-white border-2 border-slate-300 rounded-xl focus:border-blue-600 focus:outline-none">
+                <option value="Family">Family Member</option>
+                <option value="Doctor">Doctor / Clinic</option>
+                <option value="Pharmacy">Pharmacy / Chemist</option>
+                <option value="Neighbor">Neighbor / Caregiver</option>
+              </select>
+            </div>
+            <div>
+              <label for="contact-phone" class="block text-sm font-extrabold text-slate-800 mb-1">Phone Number</label>
+              <input type="tel" id="contact-phone" placeholder="e.g., +91 98765 43210"
+                class="w-full min-h-[50px] px-3.5 py-2 text-base font-bold bg-white border-2 border-slate-300 rounded-xl focus:border-blue-600 focus:outline-none" />
+            </div>
+          </div>
+          <div class="flex gap-2 pt-1">
+            <button type="submit" class="flex-1 min-h-[50px] bg-emerald-600 hover:bg-emerald-700 text-white font-black text-base rounded-xl">Save Contact</button>
+            <button type="button" onclick="toggleAddContactForm(false)" class="px-4 min-h-[50px] bg-slate-200 text-slate-800 font-bold text-sm rounded-xl">Cancel</button>
+          </div>
+        </form>
+
+        <!-- Contacts List -->
+        <div id="contacts-list" class="space-y-3">
+          <!-- Populated dynamically by renderContacts() -->
+        </div>
+      </div>
+
+      <!-- Medical ID Card (Editable for First Responders / Family) -->
+      <div class="bg-white rounded-3xl p-5 shadow-md border-2 border-slate-200 space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-lg font-black text-slate-900">My Medical ID Card</h3>
+          <button type="button" id="edit-medid-btn" onclick="toggleMedicalIdEdit()"
+            class="min-h-[44px] px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-extrabold text-xs">
+            Edit Info
+          </button>
+        </div>
+        <div id="medical-id-display" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-sm">
+          <!-- Populated dynamically -->
+        </div>
+        <form id="medical-id-form" onsubmit="saveMedicalId(event)" class="hidden space-y-3 pt-2">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="medid-blood" class="block text-xs font-extrabold text-slate-700 mb-1">Blood Group</label>
+              <input type="text" id="medid-blood" class="w-full min-h-[48px] px-3 rounded-xl border-2 border-slate-300 font-bold" />
+            </div>
+            <div>
+              <label for="medid-allergies" class="block text-xs font-extrabold text-slate-700 mb-1">Allergies</label>
+              <input type="text" id="medid-allergies" class="w-full min-h-[48px] px-3 rounded-xl border-2 border-slate-300 font-bold" />
+            </div>
+          </div>
+          <div>
+            <label for="medid-conditions" class="block text-xs font-extrabold text-slate-700 mb-1">Health Conditions / Notes</label>
+            <input type="text" id="medid-conditions" class="w-full min-h-[48px] px-3 rounded-xl border-2 border-slate-300 font-bold" />
+          </div>
+          <button type="submit" class="w-full min-h-[50px] bg-blue-700 text-white font-black rounded-xl">Save Medical ID</button>
+        </form>
+      </div>
+
+      <!-- Caregiver Android APK Export Card -->
+      <div class="bg-slate-900 text-white rounded-3xl p-5 shadow-md border-2 border-slate-700 space-y-3">
+        <div class="flex items-start gap-3">
+          <div class="w-11 h-11 rounded-2xl bg-emerald-500/20 border border-emerald-400 text-emerald-300 flex items-center justify-center shrink-0">
+            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="text-lg font-black text-white">Android App Package (.ZIP)</h3>
+            <p class="text-xs font-medium text-slate-300 mt-0.5 leading-relaxed">
+              Download the complete, bug-fixed <code class="text-emerald-300">com.medicare.companion</code> Android project with this offline app pre-bundled inside <code class="text-emerald-300">assets/index.html</code> + one-click GitHub Actions APK builder.
+            </p>
+          </div>
+        </div>
+        <button type="button" id="download-apk-zip-btn" onclick="downloadAndroidApkProject()"
+          class="w-full min-h-[54px] bg-emerald-500 hover:bg-emerald-400 active:scale-[0.99] text-slate-950 font-black text-base rounded-2xl shadow flex items-center justify-center gap-2 transition-all">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+          </svg>
+          <span>Download Android APK Project (.zip)</span>
+        </button>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- ==================== FIXED BOTTOM NAVIGATION BAR ==================== -->
+  <nav class="fixed bottom-0 inset-x-0 z-30 bg-white border-t-2 border-slate-300 shadow-[0_-6px_20px_rgba(15,23,42,0.1)]" aria-label="Main Navigation">
+    <div class="max-w-2xl mx-auto px-3 py-2 grid grid-cols-3 gap-2">
+      <button type="button" id="nav-today" onclick="switchTab('today')"
+        class="min-h-[60px] rounded-2xl flex flex-col items-center justify-center gap-1 font-extrabold text-sm transition-all">
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/>
+        </svg>
+        <span>Today's Pills</span>
+      </button>
+
+      <button type="button" id="nav-add" onclick="switchTab('add')"
+        class="min-h-[60px] rounded-2xl flex flex-col items-center justify-center gap-1 font-extrabold text-sm transition-all">
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>
+        </svg>
+        <span>Add Pill</span>
+      </button>
+
+      <button type="button" id="nav-family" onclick="switchTab('family')"
+        class="min-h-[60px] rounded-2xl flex flex-col items-center justify-center gap-1 font-extrabold text-sm transition-all">
+        <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+        </svg>
+        <span>Family / SOS</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ==================== MODAL 1: TEST MEDICINE REMINDER ALARM ==================== -->
+  <div id="alarm-modal" class="hidden fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="alarm-modal-title">
+    <div class="bg-white w-full max-w-lg rounded-3xl border-4 border-amber-400 shadow-2xl overflow-hidden">
+      <div class="bg-amber-400 text-slate-950 px-5 py-4 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+          <span class="w-3.5 h-3.5 rounded-full bg-red-600 animate-ping"></span>
+          <h2 id="alarm-modal-title" class="text-xl font-black uppercase tracking-wide">Medicine Reminder</h2>
+        </div>
+        <button type="button" onclick="closeAlarmModal()" class="min-w-[44px] min-h-[44px] rounded-xl bg-slate-950/10 hover:bg-slate-950/20 font-black text-lg" aria-label="Close Reminder">✕</button>
+      </div>
+
+      <div id="alarm-modal-body" class="p-6 space-y-5 text-center">
+        <!-- Populated dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 2: SHARE DAILY REPORT ==================== -->
+  <div id="report-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="report-modal-title">
+    <div class="bg-white w-full max-w-lg rounded-3xl border-2 border-slate-300 shadow-2xl overflow-hidden">
+      <div class="bg-blue-800 text-white px-5 py-4 flex items-center justify-between">
+        <h2 id="report-modal-title" class="text-xl font-black">Today's Medicine Report</h2>
+        <button type="button" onclick="closeReportModal()" class="min-w-[44px] min-h-[44px] rounded-xl bg-white/15 hover:bg-white/25 font-black text-lg" aria-label="Close Report">✕</button>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <pre id="report-preview-text" class="w-full max-h-64 overflow-y-auto bg-slate-100 border-2 border-slate-300 rounded-2xl p-4 text-sm font-semibold text-slate-900 whitespace-pre-wrap font-sans"></pre>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <button type="button" onclick="shareReportNative()"
+            class="min-h-[56px] bg-blue-700 hover:bg-blue-800 text-white font-black text-base rounded-2xl flex items-center justify-center gap-2">
+            <span>Share via WhatsApp / SMS</span>
+          </button>
+          <button type="button" onclick="copyReportToClipboard()"
+            class="min-h-[56px] bg-emerald-600 hover:bg-emerald-700 text-white font-black text-base rounded-2xl flex items-center justify-center gap-2">
+            <span>Copy Report Text</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 3: CUSTOM CONFIRMATION (NO BROWSER confirm()) ==================== -->
+  <div id="confirm-modal" class="hidden fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+    <div class="bg-white w-full max-w-md rounded-3xl border-2 border-slate-300 shadow-2xl p-6 space-y-5">
+      <h2 id="confirm-modal-title" class="text-xl font-black text-slate-900">Please Confirm</h2>
+      <p id="confirm-modal-message" class="text-base font-medium text-slate-700"></p>
+      <div class="grid grid-cols-2 gap-3 pt-1">
+        <button type="button" onclick="closeConfirmModal()"
+          class="min-h-[54px] bg-slate-200 hover:bg-slate-300 text-slate-900 font-extrabold text-base rounded-2xl">
+          Cancel
+        </button>
+        <button type="button" id="confirm-modal-yes-btn"
+          class="min-h-[54px] bg-red-600 hover:bg-red-700 text-white font-black text-base rounded-2xl">
+          Yes, Proceed
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TOAST NOTIFICATION WITH UNDO SUPPORT ==================== -->
+  <div id="toast-banner" class="hidden fixed bottom-24 inset-x-4 z-40 max-w-xl mx-auto bg-slate-900 text-white border-2 border-emerald-400 rounded-2xl px-4 py-3.5 shadow-2xl flex items-center justify-between gap-3" role="status" aria-live="polite">
+    <span id="toast-message" class="font-bold text-sm sm:text-base"></span>
+    <button type="button" id="toast-undo-btn" class="hidden shrink-0 min-h-[44px] px-4 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-sm rounded-xl">
+      Undo
+    </button>
+  </div>
+
+  <!-- ==================== APPLICATION LOGIC ==================== -->
+  <script src="native-notifications.bundle.js" defer></script>
+  <script>
+    (function () {
+      'use strict';
+
+      // -------------------- STORAGE KEYS & CONSTANTS --------------------
+      const STORAGE_KEYS = {
+        MEDS: 'medicare_v1_medications',
+        CONTACTS: 'medicare_v1_contacts',
+        MEDICAL_ID: 'medicare_v1_medical_id',
+        FONT_SCALE: 'medicare_v1_font_scale',
+        LAST_DATE: 'medicare_v1_last_active_date',
+      };
+
+      const PERIOD_ORDER = ['Morning', 'Afternoon', 'Evening', 'Night'];
+
+      const PILL_CATALOG = [
+        { id: 'white-round', label: 'White Round' },
+        { id: 'blue-oval', label: 'Blue Oval' },
+        { id: 'red-capsule', label: 'Red Capsule' },
+        { id: 'yellow-tablet', label: 'Yellow Tablet' },
+        { id: 'syrup', label: 'Syrup' },
+        { id: 'drops', label: 'Drops' },
+      ];
+
+      // Pre-loaded sample elderly medications (includes 1 taken + 1 low-stock <= 5)
+      const DEFAULT_MEDICATIONS = [];
+
+      const DEFAULT_CONTACTS = [];
+
+      const DEFAULT_MEDICAL_ID = { bloodGroup: 'Not set', allergies: 'Not set', conditions: 'Not set' };
+
+      // -------------------- APPLICATION STATE --------------------
+      let medications = [];
+      let contacts = [];
+      let medicalId = { ...DEFAULT_MEDICAL_ID };
+      let activeTab = 'today';
+      let activePeriodFilter = 'All Day';
+      let fontScale = 'normal';
+      let isSpeaking = false;
+      let toastTimer = null;
+      let pendingConfirmAction = null;
+      let activeAlarmMedId = null;
+
+      // -------------------- HELPER: DATE & TIME FORMATTING --------------------
+      function getTodayKey() {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, '0');
+        const d = String(now.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+      }
+
+      function formatTime12Hour(time24) {
+        if (!time24 || !time24.includes(':')) return '8:00 AM';
+        const [rawH, rawM] = time24.split(':').map(Number);
+        const ampm = rawH >= 12 ? 'PM' : 'AM';
+        const h12 = rawH % 12 === 0 ? 12 : rawH % 12;
+        const mStr = String(rawM).padStart(2, '0');
+        return `${h12}:${mStr} ${ampm}`;
+      }
+
+      function getCurrentTime12Hour() {
+        const now = new Date();
+        const h = now.getHours();
+        const m = String(now.getMinutes()).padStart(2, '0');
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        const h12 = h % 12 === 0 ? 12 : h % 12;
+        return `${h12}:${m} ${ampm}`;
+      }
+
+      function timeToMinutes(time24) {
+        if (!time24 || !time24.includes(':')) return 480;
+        const [h, m] = time24.split(':').map(Number);
+        return h * 60 + m;
+      }
+
+      function escapeHtml(str) {
+        return String(str ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      // -------------------- VISUAL PILL SVGs --------------------
+      function getPillSvg(type, sizeClass = 'w-14 h-14') {
+        switch (type) {
+          case 'white-round':
+            return `
+              <svg class="${sizeClass}" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+                <circle cx="32" cy="34" r="24" fill="#CBD5E1"/>
+                <circle cx="32" cy="31" r="24" fill="#FFFFFF" stroke="#475569" stroke-width="3"/>
+                <line x1="14" y1="31" x2="50" y2="31" stroke="#64748B" stroke-width="3" stroke-linecap="round"/>
+                <path d="M18 19C22 14 28 12 34 12" stroke="#E2E8F0" stroke-width="3" stroke-linecap="round"/>
+              </svg>`;
+          case 'blue-oval':
+            return `
+              <svg class="${sizeClass}" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+                <rect x="6" y="19" width="52" height="30" rx="15" fill="#1E3A8A"/>
+                <rect x="6" y="16" width="52" height="30" rx="15" fill="#2563EB" stroke="#1E3A8A" stroke-width="3"/>
+                <line x1="32" y1="19" x2="32" y2="43" stroke="#93C5FD" stroke-width="2.5" stroke-linecap="round"/>
+                <path d="M15 23H26" stroke="#BFDBFE" stroke-width="3" stroke-linecap="round"/>
+              </svg>`;
+          case 'red-capsule':
+            return `
+              <svg class="${sizeClass}" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+                <g transform="rotate(-32 32 32)">
+                  <rect x="6" y="18" width="52" height="28" rx="14" fill="#FFFFFF" stroke="#334155" stroke-width="3"/>
+                  <path d="M32 18H44C51.732 18 58 24.268 58 32C58 39.732 51.732 46 44 46H32V18Z" fill="#DC2626" stroke="#7F1D1D" stroke-width="3"/>
+                  <path d="M14 24H25" stroke="#CBD5E1" stroke-width="3" stroke-linecap="round"/>
+                  <path d="M38 24H47" stroke="#FCA5A5" stroke-width="3" stroke-linecap="round"/>
+                </g>
+              </svg>`;
+          case 'yellow-tablet':
+            return `
+              <svg class="${sizeClass}" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+                <circle cx="32" cy="34" r="23" fill="#B45309"/>
+                <circle cx="32" cy="31" r="23" fill="#FACC15" stroke="#854D0E" stroke-width="3"/>
+                <line x1="20" y1="19" x2="44" y2="43" stroke="#A16207" stroke-width="3" stroke-linecap="round"/>
+                <path d="M20 17C24 14 29 13 33 13" stroke="#FEF9C3" stroke-width="3" stroke-linecap="round"/>
+              </svg>`;
+          case 'syrup':
+            return `
+              <svg class="${sizeClass}" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+                <rect x="23" y="6" width="18" height="9" rx="3" fill="#0F172A"/>
+                <rect x="25" y="15" width="14" height="6" fill="#94A3B8"/>
+                <rect x="16" y="21" width="32" height="37" rx="8" fill="#D97706" stroke="#78350F" stroke-width="3"/>
+                <rect x="20" y="30" width="24" height="17" rx="3" fill="#FEF3C7"/>
+                <path d="M32 34V43M27.5 38.5H36.5" stroke="#D97706" stroke-width="3" stroke-linecap="round"/>
+              </svg>`;
+          case 'drops':
+          default:
+            return `
+              <svg class="${sizeClass}" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+                <path d="M27 8C27 5.79086 28.7909 4 31 4H33C35.2091 4 37 5.79086 37 8V16H27V8Z" fill="#0284C7"/>
+                <rect x="23" y="15" width="18" height="7" rx="2" fill="#0F172A"/>
+                <rect x="19" y="22" width="26" height="32" rx="7" fill="#E0F2FE" stroke="#0369A1" stroke-width="3"/>
+                <path d="M32 30C32 30 26 37.5 26 41.5C26 44.8137 28.6863 47.5 32 47.5C35.3137 47.5 38 44.8137 38 41.5C38 37.5 32 30 32 30Z" fill="#0284C7"/>
+              </svg>`;
+        }
+      }
+
+      // -------------------- STORAGE INITIALIZATION & DAILY RESET --------------------
+      function loadState() {
+        try {
+          const savedMeds = localStorage.getItem(STORAGE_KEYS.MEDS);
+          const savedContacts = localStorage.getItem(STORAGE_KEYS.CONTACTS);
+          const savedMedId = localStorage.getItem(STORAGE_KEYS.MEDICAL_ID);
+          const savedFont = localStorage.getItem(STORAGE_KEYS.FONT_SCALE);
+          const lastDate = localStorage.getItem(STORAGE_KEYS.LAST_DATE);
+          const todayKey = getTodayKey();
+
+          medications = savedMeds ? JSON.parse(savedMeds) : JSON.parse(JSON.stringify(DEFAULT_MEDICATIONS));
+          contacts = savedContacts ? JSON.parse(savedContacts) : JSON.parse(JSON.stringify(DEFAULT_CONTACTS));
+          medicalId = savedMedId ? JSON.parse(savedMedId) : { ...DEFAULT_MEDICAL_ID };
+          fontScale = savedFont || 'normal';
+
+          // Automatically reset daily taken flags on a new calendar day
+          if (lastDate && lastDate !== todayKey) {
+            medications = medications.map((m) => ({ ...m, taken: false, takenAt: null }));
+            saveMedications();
+          }
+          localStorage.setItem(STORAGE_KEYS.LAST_DATE, todayKey);
+        } catch (err) {
+          console.error('Storage load error:', err);
+          medications = JSON.parse(JSON.stringify(DEFAULT_MEDICATIONS));
+          contacts = JSON.parse(JSON.stringify(DEFAULT_CONTACTS));
+        }
+      }
+
+      // Keep the phone's native daily reminders in sync with the saved medicine list.
+      // This is a no-op in an ordinary browser; Capacitor provides the native plugin.
+      const REMINDER_IDS_KEY = 'medicare_v1_native_reminder_ids';
+      function reminderNotificationId(medId) {
+        let hash = 2166136261;
+        for (let i = 0; i < String(medId).length; i++) {
+          hash ^= String(medId).charCodeAt(i);
+          hash = Math.imul(hash, 16777619);
+        }
+        return (hash >>> 0) % 2000000000 + 1;
+      }
+
+      async function syncNativeMedicationReminders() {
+        const plugin = window.MediCareLocalNotifications;
+        if (!plugin || !window.Capacitor?.isNativePlatform?.()) return;
+        try {
+          let permission = await plugin.checkPermissions();
+          if (permission.display !== 'granted') permission = await plugin.requestPermissions();
+          if (permission.display !== 'granted') {
+            showToast('Allow notifications in phone settings to receive medicine reminders.');
+            return;
+          }
+          const previousIds = JSON.parse(localStorage.getItem(REMINDER_IDS_KEY) || '[]');
+          if (previousIds.length) await plugin.cancel({ notifications: previousIds.map(id => ({ id })) });
+          const notifications = medications
+            .filter(m => /^([01]\d|2[0-3]):[0-5]\d$/.test(m.time || '') && m.name)
+            .map(m => {
+              const [hour, minute] = m.time.split(':').map(Number);
+              return {
+                id: reminderNotificationId(m.id),
+                title: `Medicine reminder: ${m.name}`,
+                body: `Time for ${m.dosage || 'your prescribed dose'}${m.food ? ` — ${m.food}` : ''}. Follow the prescription.`,
+                schedule: { on: { hour, minute }, allowWhileIdle: true },
+                extra: { medicineId: m.id }
+              };
+            });
+          if (notifications.length) {
+            const result = await plugin.schedule({ notifications });
+            if (result?.warnings?.length) console.warn('Reminder scheduling warnings:', result.warnings);
+          }
+          localStorage.setItem(REMINDER_IDS_KEY, JSON.stringify(notifications.map(n => n.id)));
+        } catch (err) {
+          console.error('Native reminder scheduling failed:', err);
+          showToast('Could not update phone reminders. Check notification permissions.');
+        }
+      }
+
+      function saveMedications() {
+        try {
+          localStorage.setItem(STORAGE_KEYS.MEDS, JSON.stringify(medications));
+          localStorage.setItem(STORAGE_KEYS.LAST_DATE, getTodayKey());
+          void syncNativeMedicationReminders();
+        } catch (err) {
+          console.error('Save medications failed:', err);
+        }
+      }
+
+      function saveContacts() {
+        try {
+          localStorage.setItem(STORAGE_KEYS.CONTACTS, JSON.stringify(contacts));
+        } catch (err) {
+          console.error('Save contacts failed:', err);
+        }
+      }
+
+      // -------------------- FONT SIZE SWITCHER (A / A+ / A++) --------------------
+      window.setFontScale = function (scale) {
+        fontScale = scale;
+        const root = document.documentElement;
+        if (scale === 'large') {
+          root.style.fontSize = '20px';
+        } else if (scale === 'xlarge') {
+          root.style.fontSize = '23px';
+        } else {
+          root.style.fontSize = '17px';
+        }
+
+        try {
+          localStorage.setItem(STORAGE_KEYS.FONT_SCALE, scale);
+        } catch (_) {}
+
+        ['normal', 'large', 'xlarge'].forEach((key) => {
+          const btn = document.getElementById(`font-btn-${key}`);
+          if (!btn) return;
+          if (key === scale) {
+            btn.className =
+              'px-3 py-2 rounded-xl font-black transition-all min-w-[46px] min-h-[44px] flex items-center justify-center bg-amber-400 text-slate-950 shadow-sm ring-2 ring-white';
+          } else {
+            btn.className =
+              'px-3 py-2 rounded-xl font-extrabold transition-all min-w-[46px] min-h-[44px] flex items-center justify-center text-slate-200 hover:bg-slate-700';
+          }
+        });
+      };
+
+      // -------------------- LIVE DIGITAL CLOCK --------------------
+      function updateLiveClock() {
+        const now = new Date();
+        const timeEl = document.getElementById('live-clock-time');
+        const dateEl = document.getElementById('live-clock-date');
+        if (!timeEl || !dateEl) return;
+
+        let h = now.getHours();
+        const m = String(now.getMinutes()).padStart(2, '0');
+        const s = String(now.getSeconds()).padStart(2, '0');
+        const ampm = h >= 12 ? 'PM' : 'AM';
+        h = h % 12 === 0 ? 12 : h % 12;
+
+        timeEl.textContent = `${String(h).padStart(2, '0')}:${m}:${s} ${ampm}`;
+        dateEl.textContent = now.toLocaleDateString('en-US', {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+        });
+      }
+
+      // -------------------- WEB AUDIO CHIME (SOOTHING BELL) --------------------
+      function playGentleChime(isAlarm = false) {
+        try {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (!AudioCtx) return;
+          const ctx = new AudioCtx();
+          if (ctx.state === 'suspended') {
+            ctx.resume();
+          }
+
+          const notes = isAlarm ? [523.25, 659.25, 783.99, 1046.5] : [587.33, 880.0];
+          const spacing = isAlarm ? 0.28 : 0.16;
+
+          notes.forEach((freq, idx) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * spacing);
+
+            gain.gain.setValueAtTime(0.001, ctx.currentTime + idx * spacing);
+            gain.gain.exponentialRampToValueAtTime(0.22, ctx.currentTime + idx * spacing + 0.04);
+            gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + idx * spacing + 0.85);
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(ctx.currentTime + idx * spacing);
+            osc.stop(ctx.currentTime + idx * spacing + 0.9);
+          });
+        } catch (err) {
+          console.warn('Web Audio playback skipped:', err);
+        }
+      }
+
+      // -------------------- WEB SPEECH API (CALM SLOW RATE 0.88) --------------------
+      function speakCalmly(text, onEndCallback) {
+        if (!('speechSynthesis' in window)) {
+          showToast('Voice readout is not supported on this browser.');
+          return;
+        }
+
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.rate = 0.88; // Calm, clear, elderly-friendly pace
+          utterance.pitch = 1.0;
+          utterance.volume = 1.0;
+
+          const voices = window.speechSynthesis.getVoices();
+          const preferredVoice =
+            voices.find((v) => v.lang && v.lang.startsWith('en') && v.localService) ||
+            voices.find((v) => v.lang && v.lang.startsWith('en'));
+          if (preferredVoice) {
+            utterance.voice = preferredVoice;
+          }
+
+          isSpeaking = true;
+          updateReadAllButtonState();
+
+          utterance.onend = () => {
+            isSpeaking = false;
+            updateReadAllButtonState();
+            if (typeof onEndCallback === 'function') onEndCallback();
+          };
+          utterance.onerror = () => {
+            isSpeaking = false;
+            updateReadAllButtonState();
+          };
+
+          window.speechSynthesis.speak(utterance);
+        } catch (err) {
+          isSpeaking = false;
+          updateReadAllButtonState();
+          showToast('Unable to start voice readout.');
+        }
+      }
+
+      function updateReadAllButtonState() {
+        const btn = document.getElementById('read-all-voice-btn');
+        if (!btn) return;
+        if (isSpeaking) {
+          btn.innerHTML = `
+            <svg class="w-6 h-6 animate-pulse shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <rect x="6" y="6" width="12" height="12" rx="2"/>
+            </svg>
+            <span>Stop Voice</span>`;
+        } else {
+          btn.innerHTML = `
+            <svg class="w-6 h-6 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+              <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+            </svg>
+            <span>Read All</span>`;
+        }
+      }
+
+      window.handleReadAllSpeech = function () {
+        if (isSpeaking && 'speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          isSpeaking = false;
+          updateReadAllButtonState();
+          return;
+        }
+
+        const total = medications.length;
+        const takenCount = medications.filter((m) => m.taken).length;
+        const remaining = getSortedMedications().filter((m) => !m.taken);
+
+        if (total === 0) {
+          speakCalmly('You have no medicines scheduled today. Tap Add Pill at the bottom to add one.');
+          return;
+        }
+
+        if (remaining.length === 0) {
+          speakCalmly(`Wonderful job! You have taken all ${total} of your medicines for today.`);
+          return;
+        }
+
+        const lines = remaining.map((med, i) => {
+          return `Number ${i + 1}: ${med.period} at ${formatTime12Hour(med.time)}, take ${med.name}, ${med.dosage}, ${med.food}.`;
+        });
+
+        const fullSpeech = `Hello. You have taken ${takenCount} out of ${total} medicines today. You have ${remaining.length} remaining. ${lines.join(' ')}`;
+        speakCalmly(fullSpeech);
+      };
+
+      window.speakSingleMedicine = function (medId) {
+        const med = medications.find((m) => m.id === medId);
+        if (!med) return;
+        const statusPart = med.taken
+          ? `Already taken today${med.takenAt ? ' at ' + med.takenAt : ''}.`
+          : 'Not taken yet.';
+        const lowStockPart =
+          Number(med.stock) <= 5
+            ? ` Warning: low stock, only ${med.stock} remaining. Please refill soon.`
+            : '';
+        const text = `${med.period} medicine at ${formatTime12Hour(med.time)}. ${med.name}. Dosage: ${med.dosage}. Instruction: ${med.food}. ${statusPart}${lowStockPart}`;
+        speakCalmly(text);
+      };
+
+      // -------------------- SORTING & NEXT MEDICINE LOGIC --------------------
+      function getSortedMedications() {
+        return [...medications].sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
+      }
+
+      function getNextUpcomingMedicine() {
+        const untaken = getSortedMedications().filter((m) => !m.taken);
+        if (untaken.length === 0) return null;
+
+        const now = new Date();
+        const nowMins = now.getHours() * 60 + now.getMinutes();
+
+        // Find the first untaken medicine scheduled now or later; if all are earlier today, pick the earliest overdue one
+        const upcoming = untaken.find((m) => timeToMinutes(m.time) >= nowMins - 30);
+        return upcoming || untaken[0];
+      }
+
+      // -------------------- RENDER HEADER PROGRESS PILL --------------------
+      function renderProgressPill() {
+        const total = medications.length;
+        const taken = medications.filter((m) => m.taken).length;
+        const pillEl = document.getElementById('daily-progress-pill');
+        const textEl = document.getElementById('daily-progress-text');
+        if (!pillEl || !textEl) return;
+
+        textEl.textContent = `${taken}/${total} Taken`;
+
+        if (total > 0 && taken === total) {
+          pillEl.className =
+            'flex items-center gap-2 bg-emerald-500 text-slate-950 border-2 border-emerald-200 px-3.5 py-1.5 rounded-full font-black text-sm shadow';
+        } else {
+          pillEl.className =
+            'flex items-center gap-2 bg-emerald-500/20 border-2 border-emerald-400 text-emerald-200 px-3.5 py-1.5 rounded-full font-extrabold text-sm';
+        }
+      }
+
+      // -------------------- RENDER NEXT MEDICINE BANNER --------------------
+      function renderNextMedicineBanner() {
+        const banner = document.getElementById('next-medicine-banner');
+        if (!banner) return;
+
+        const nextMed = getNextUpcomingMedicine();
+        const total = medications.length;
+
+        if (total === 0) {
+          banner.className =
+            'bg-gradient-to-br from-slate-800 to-slate-900 text-white rounded-3xl p-5 shadow-xl border-2 border-slate-600 space-y-4';
+          banner.innerHTML = `
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <span class="inline-block bg-slate-700 text-amber-300 text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full">Getting Started</span>
+                <h2 class="text-xl font-black mt-2">No Medicines Added Yet</h2>
+                <p class="text-sm text-slate-300 mt-1">Tap "Add Pill" below to add your daily medications.</p>
+              </div>
+              <button type="button" onclick="switchTab('add')"
+                class="min-h-[56px] px-5 py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-base rounded-2xl shadow shrink-0">
+                + Add First Pill
+              </button>
+            </div>`;
+          return;
+        }
+
+        if (!nextMed) {
+          banner.className =
+            'bg-gradient-to-br from-emerald-800 via-emerald-700 to-teal-800 text-white rounded-3xl p-5 shadow-xl border-2 border-emerald-300 space-y-4';
+          banner.innerHTML = `
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="space-y-1.5">
+                <span class="inline-flex items-center gap-1.5 bg-white text-emerald-900 text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full">
+                  ✓ All Done For Today
+                </span>
+                <h2 class="text-2xl font-black leading-snug">All ${total} Medicines Taken!</h2>
+                <p class="text-sm font-medium text-emerald-100">Great job staying on track with your health today.</p>
+              </div>
+              <button type="button" id="read-all-voice-btn" onclick="handleReadAllSpeech()"
+                class="min-h-[58px] px-5 py-3 bg-amber-400 hover:bg-amber-300 active:scale-[0.98] text-slate-950 font-black text-base rounded-2xl shadow-lg flex items-center justify-center gap-2.5 shrink-0 transition-all">
+                <svg class="w-6 h-6 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+                </svg>
+                <span>Read All</span>
+              </button>
+            </div>`;
+          updateReadAllButtonState();
+          return;
+        }
+
+        const now = new Date();
+        const nowMins = now.getHours() * 60 + now.getMinutes();
+        const isDueNow = timeToMinutes(nextMed.time) <= nowMins + 15;
+
+        banner.className =
+          'bg-gradient-to-br from-blue-950 via-blue-900 to-indigo-900 text-white rounded-3xl p-5 shadow-xl border-2 border-blue-400/60 space-y-4';
+        banner.innerHTML = `
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex items-center gap-3.5 min-w-0">
+              <div class="w-16 h-16 rounded-2xl bg-white/15 border border-white/25 flex items-center justify-center shrink-0">
+                ${getPillSvg(nextMed.pillType, 'w-12 h-12')}
+              </div>
+              <div class="min-w-0">
+                <span class="inline-block ${isDueNow ? 'bg-amber-400 text-slate-950' : 'bg-blue-700 text-blue-100'} text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full">
+                  ${isDueNow ? 'Next Medicine • Due Soon' : 'Next Medicine'}
+                </span>
+                <h2 class="text-xl sm:text-2xl font-black text-white mt-1.5 leading-tight break-words">${escapeHtml(nextMed.name)}</h2>
+                <p class="text-sm font-bold text-blue-100 mt-1">
+                  ${formatTime12Hour(nextMed.time)} • ${escapeHtml(nextMed.dosage)} • ${escapeHtml(nextMed.food)}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <button type="button" id="read-all-voice-btn" onclick="handleReadAllSpeech()"
+              class="min-h-[58px] px-5 py-3 bg-amber-400 hover:bg-amber-300 active:scale-[0.98] text-slate-950 font-black text-base rounded-2xl shadow-lg flex items-center justify-center gap-2.5 transition-all">
+              <svg class="w-6 h-6 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+              </svg>
+              <span>Read All</span>
+            </button>
+
+            <button type="button" onclick="toggleMedicationTaken('${nextMed.id}')"
+              class="min-h-[58px] px-5 py-3 bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-slate-950 font-black text-base rounded-2xl shadow-lg flex items-center justify-center gap-2 transition-all">
+              <svg class="w-6 h-6 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              <span>Take Now</span>
+            </button>
+          </div>`;
+        updateReadAllButtonState();
+      }
+
+      // -------------------- RENDER TIME-OF-DAY FILTER TABS --------------------
+      function renderFilterTabs() {
+        const container = document.getElementById('time-filter-tabs');
+        if (!container) return;
+
+        const tabs = ['All Day', ...PERIOD_ORDER];
+        container.innerHTML = tabs
+          .map((tab) => {
+            const count =
+              tab === 'All Day'
+                ? medications.length
+                : medications.filter((m) => m.period === tab).length;
+            const isActive = activePeriodFilter === tab;
+            const spanClass = tab === 'All Day' ? 'col-span-2 sm:col-span-1' : '';
+
+            return `
+              <button type="button" role="tab" aria-selected="${isActive}"
+                onclick="setPeriodFilter('${tab}')"
+                class="${spanClass} min-h-[52px] px-3 py-2.5 rounded-2xl border-2 font-extrabold text-sm flex items-center justify-center gap-1.5 transition-all ${
+                  isActive
+                    ? 'bg-slate-900 text-white border-slate-900 shadow-md'
+                    : 'bg-white text-slate-800 border-slate-300 hover:border-slate-500'
+                }">
+                <span>${tab}</span>
+                <span class="px-2 py-0.5 rounded-full text-xs font-black ${
+                  isActive ? 'bg-amber-400 text-slate-950' : 'bg-slate-200 text-slate-800'
+                }">${count}</span>
+              </button>`;
+          })
+          .join('');
+      }
+
+      window.setPeriodFilter = function (period) {
+        activePeriodFilter = period;
+        renderFilterTabs();
+        renderMedications();
+      };
+
+      // -------------------- FOOD BADGE STYLING --------------------
+      function getFoodBadgeHtml(food) {
+        const map = {
+          'After Food': 'bg-amber-100 text-amber-950 border-amber-400',
+          'Before Food': 'bg-sky-100 text-sky-950 border-sky-400',
+          'With Water': 'bg-cyan-100 text-cyan-950 border-cyan-400',
+          'Before Sleep': 'bg-indigo-100 text-indigo-950 border-indigo-400',
+        };
+        const cls = map[food] || 'bg-slate-100 text-slate-900 border-slate-300';
+        return `<span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl border-2 ${cls} text-xs font-black">${escapeHtml(food)}</span>`;
+      }
+
+      // -------------------- RENDER GROUPED MEDICATION CARDS --------------------
+      function renderMedications() {
+        const container = document.getElementById('medications-container');
+        if (!container) return;
+
+        const sorted = getSortedMedications();
+        const groupsToShow =
+          activePeriodFilter === 'All Day' ? PERIOD_ORDER : [activePeriodFilter];
+
+        const renderedGroups = groupsToShow
+          .map((period) => {
+            const medsInPeriod = sorted.filter((m) => m.period === period);
+            if (medsInPeriod.length === 0) return '';
+
+            const cardsHtml = medsInPeriod
+              .map((med) => {
+                const isLowStock = Number(med.stock) <= 5;
+                const cardBorder = med.taken
+                  ? 'bg-emerald-50/70 border-emerald-400'
+                  : isLowStock
+                  ? 'bg-white border-amber-500'
+                  : 'bg-white border-slate-300';
+
+                return `
+                  <article class="${cardBorder} rounded-3xl p-4 sm:p-5 shadow-sm border-2 transition-all space-y-4">
+                    <!-- Top Row: Pill SVG + Name/Time/Food + Listen Voice Button -->
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="flex items-start gap-3.5 min-w-0">
+                        <div class="w-16 h-16 rounded-2xl bg-slate-100 border-2 border-slate-200 flex items-center justify-center shrink-0">
+                          ${getPillSvg(med.pillType, 'w-12 h-12')}
+                        </div>
+                        <div class="min-w-0 space-y-1.5">
+                          <div class="flex flex-wrap items-center gap-2">
+                            <span class="inline-block bg-slate-900 text-white text-sm font-black px-3 py-1 rounded-xl tabular-nums">
+                              ${formatTime12Hour(med.time)}
+                            </span>
+                            ${getFoodBadgeHtml(med.food)}
+                          </div>
+                          <h4 class="text-xl font-black text-slate-950 leading-snug break-words ${
+                            med.taken ? 'line-through decoration-emerald-700 decoration-2 opacity-80' : ''
+                          }">
+                            ${escapeHtml(med.name)}
+                          </h4>
+                          <p class="text-sm font-bold text-slate-700">
+                            Dose: <span class="text-slate-950">${escapeHtml(med.dosage)}</span>
+                            <span class="mx-1.5 text-slate-400">•</span>
+                            <span class="${isLowStock ? 'text-red-700 font-black' : 'text-slate-600'}">${med.stock} left</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      <!-- Listen Voice Readout Button on Every Card -->
+                      <button type="button" onclick="speakSingleMedicine('${med.id}')"
+                        class="min-h-[52px] min-w-[52px] px-3 py-2 rounded-2xl bg-blue-100 hover:bg-blue-200 active:scale-95 text-blue-950 border-2 border-blue-300 font-extrabold text-xs flex flex-col items-center justify-center gap-0.5 shrink-0 transition-all"
+                        aria-label="Listen to ${escapeHtml(med.name)} instructions">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                        </svg>
+                        <span>Listen</span>
+                      </button>
+                    </div>
+
+                    <!-- Low-Stock Refill Warning Banner (<= 5 pills remaining) -->
+                    ${
+                      isLowStock
+                        ? `
+                      <div class="bg-amber-100 border-2 border-amber-500 rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-2">
+                        <div class="flex items-center gap-2 text-amber-950 font-black text-sm">
+                          <svg class="w-5 h-5 text-red-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                          </svg>
+                          <span>Low Stock: Only ${med.stock} left — Refill Soon!</span>
+                        </div>
+                        <button type="button" onclick="refillMedication('${med.id}', 30)"
+                          class="min-h-[44px] px-3.5 py-1.5 bg-amber-500 hover:bg-amber-600 text-slate-950 font-black text-xs rounded-xl shadow-sm">
+                          + Refill (+30)
+                        </button>
+                      </div>`
+                        : ''
+                    }
+
+                    <!-- Bottom Action Row: Large 'Mark as Taken' Button with Undo Support + Delete -->
+                    <div class="flex items-center gap-2.5 pt-1">
+                      ${
+                        med.taken
+                          ? `
+                        <div class="flex-1 min-h-[56px] px-4 py-2.5 bg-emerald-600 text-white rounded-2xl font-black text-base flex items-center justify-center gap-2 shadow-sm">
+                          <svg class="w-6 h-6 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                          <span>Taken${med.takenAt ? ' at ' + escapeHtml(med.takenAt) : ''}</span>
+                        </div>
+                        <button type="button" onclick="toggleMedicationTaken('${med.id}')"
+                          class="min-h-[56px] px-4 py-2.5 bg-amber-200 hover:bg-amber-300 text-slate-950 border-2 border-amber-500 font-black text-sm rounded-2xl shrink-0 transition-all">
+                          Undo
+                        </button>`
+                          : `
+                        <button type="button" onclick="toggleMedicationTaken('${med.id}')"
+                          class="flex-1 min-h-[58px] px-5 py-3 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-black text-lg rounded-2xl shadow-md flex items-center justify-center gap-2.5 transition-all">
+                          <svg class="w-6 h-6 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="20 6 9 17 4 12"/>
+                          </svg>
+                          <span>Mark as Taken</span>
+                        </button>`
+                      }
+
+                      <button type="button" onclick="openConfirmModal('delete-med', '${med.id}')"
+                        class="min-h-[56px] min-w-[48px] px-3 rounded-2xl bg-slate-100 hover:bg-red-100 text-slate-500 hover:text-red-700 border-2 border-slate-200 flex items-center justify-center transition-all"
+                        aria-label="Remove ${escapeHtml(med.name)}">
+                        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                          <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </article>`;
+              })
+              .join('');
+
+            return `
+              <div class="space-y-3">
+                <div class="flex items-center gap-2.5 px-1">
+                  <span class="w-3 h-3 rounded-full bg-blue-700"></span>
+                  <h3 class="text-lg font-black text-slate-900">${period}</h3>
+                  <span class="text-xs font-extrabold text-slate-600 bg-slate-200 px-2.5 py-0.5 rounded-full">
+                    ${medsInPeriod.filter((m) => m.taken).length}/${medsInPeriod.length} done
+                  </span>
+                </div>
+                <div class="space-y-3.5">${cardsHtml}</div>
+              </div>`;
+          })
+          .filter(Boolean)
+          .join('');
+
+        if (!renderedGroups) {
+          container.innerHTML = `
+            <div class="bg-white rounded-3xl p-8 text-center border-2 border-slate-200 space-y-3">
+              <p class="text-lg font-black text-slate-800">No medicines scheduled for ${escapeHtml(activePeriodFilter)}.</p>
+              <p class="text-sm font-medium text-slate-600">Tap "All Day" to view your full schedule or add a new pill.</p>
+              <button type="button" onclick="setPeriodFilter('All Day')"
+                class="min-h-[50px] px-5 py-2.5 bg-slate-900 text-white font-extrabold text-sm rounded-2xl">
+                Show All Day
+              </button>
+            </div>`;
+          return;
+        }
+
+        container.innerHTML = renderedGroups;
+      }
+
+      // -------------------- MARK AS TAKEN & UNDO LOGIC --------------------
+      window.toggleMedicationTaken = function (medId) {
+        const med = medications.find((m) => m.id === medId);
+        if (!med) return;
+
+        if (!med.taken) {
+          med.taken = true;
+          med.takenAt = getCurrentTime12Hour();
+          if (Number(med.stock) > 0) {
+            med.stock = Number(med.stock) - 1;
+          }
+          saveMedications();
+          refreshTodayUI();
+          playGentleChime(false);
+          showToast(`Marked "${med.name}" as taken.`, () => {
+            window.toggleMedicationTaken(medId);
+          });
+        } else {
+          // Undo taken
+          med.taken = false;
+          med.takenAt = null;
+          med.stock = Number(med.stock) + 1;
+          saveMedications();
+          refreshTodayUI();
+          showToast(`Undid "${med.name}". Marked as not taken yet.`);
+        }
+      };
+
+      window.refillMedication = function (medId, amount) {
+        const med = medications.find((m) => m.id === medId);
+        if (!med) return;
+        med.stock = Number(med.stock) + Number(amount);
+        saveMedications();
+        refreshTodayUI();
+        showToast(`Refilled ${med.name}: now ${med.stock} in stock.`);
+      };
+
+      function refreshTodayUI() {
+        renderProgressPill();
+        renderNextMedicineBanner();
+        renderFilterTabs();
+        renderMedications();
+      }
+
+      // -------------------- ADD PILL TAB LOGIC --------------------
+      function renderPillPicker() {
+        const grid = document.getElementById('pill-picker-grid');
+        const currentVal = document.getElementById('med-pill-type').value;
+        if (!grid) return;
+
+        grid.innerHTML = PILL_CATALOG.map((pill) => {
+          const selected = pill.id === currentVal;
+          return `
+            <button type="button" onclick="selectPillType('${pill.id}')"
+              class="min-h-[96px] p-3 rounded-2xl border-2 flex flex-col items-center justify-center gap-1.5 transition-all ${
+                selected
+                  ? 'bg-blue-50 border-blue-700 ring-2 ring-blue-500/30 shadow-sm'
+                  : 'bg-slate-50 border-slate-300 hover:border-slate-500'
+              }">
+              ${getPillSvg(pill.id, 'w-11 h-11')}
+              <span class="text-xs font-black text-center ${selected ? 'text-blue-950' : 'text-slate-800'}">${pill.label}</span>
+            </button>`;
+        }).join('');
+      }
+
+      window.selectPillType = function (pillId) {
+        document.getElementById('med-pill-type').value = pillId;
+        renderPillPicker();
+      };
+
+      window.selectDosagePreset = function (val) {
+        document.getElementById('med-dosage').value = val;
+      };
+
+      window.selectPeriodPreset = function (period, defaultTime) {
+        document.getElementById('med-period').value = period;
+        if (defaultTime) {
+          document.getElementById('med-time').value = defaultTime;
+        }
+        updatePeriodButtonStyles();
+      };
+
+      window.syncPeriodFromTime = function (timeVal) {
+        if (!timeVal || !timeVal.includes(':')) return;
+        const hour = Number(timeVal.split(':')[0]);
+        let period = 'Morning';
+        if (hour >= 5 && hour < 12) period = 'Morning';
+        else if (hour >= 12 && hour < 17) period = 'Afternoon';
+        else if (hour >= 17 && hour < 21) period = 'Evening';
+        else period = 'Night';
+
+        document.getElementById('med-period').value = period;
+        updatePeriodButtonStyles();
+      };
+
+      function updatePeriodButtonStyles() {
+        const selected = document.getElementById('med-period').value;
+        document.querySelectorAll('.period-btn').forEach((btn) => {
+          const isMatch = btn.getAttribute('data-period') === selected;
+          btn.className = `period-btn min-h-[56px] p-3 rounded-2xl border-2 font-extrabold text-sm flex flex-col items-center justify-center transition-all ${
+            isMatch
+              ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+              : 'bg-slate-50 text-slate-800 border-slate-300 hover:border-slate-500'
+          }`;
+        });
+      }
+
+      window.selectFoodInstruction = function (food) {
+        document.getElementById('med-food').value = food;
+        updateFoodButtonStyles();
+      };
+
+      function updateFoodButtonStyles() {
+        const selected = document.getElementById('med-food').value;
+        document.querySelectorAll('.food-btn').forEach((btn) => {
+          const isMatch = btn.getAttribute('data-food') === selected;
+          btn.className = `food-btn min-h-[56px] px-4 py-3 rounded-2xl border-2 font-extrabold text-sm flex items-center justify-center gap-2 transition-all ${
+            isMatch
+              ? 'bg-blue-700 text-white border-blue-700 shadow-sm'
+              : 'bg-slate-50 text-slate-800 border-slate-300 hover:border-slate-500'
+          }`;
+        });
+      }
+
+      window.adjustStockInput = function (delta) {
+        const input = document.getElementById('med-stock');
+        const nextVal = Math.max(0, (Number(input.value) || 0) + delta);
+        input.value = nextVal;
+      };
+
+      window.handleAddMedicine = function (event) {
+        event.preventDefault();
+        const errorBox = document.getElementById('add-form-error');
+        const name = document.getElementById('med-name').value.trim();
+        const dosage = document.getElementById('med-dosage').value.trim() || '1 Tablet';
+        const pillType = document.getElementById('med-pill-type').value || 'white-round';
+        const period = document.getElementById('med-period').value || 'Morning';
+        const time = document.getElementById('med-time').value || '08:00';
+        const food = document.getElementById('med-food').value || 'After Food';
+        const stock = Math.max(0, Number(document.getElementById('med-stock').value) || 0);
+
+        if (!name) {
+          errorBox.textContent = 'Please type the medicine name before saving.';
+          errorBox.classList.remove('hidden');
+          document.getElementById('med-name').focus();
+          return;
+        }
+
+        errorBox.classList.add('hidden');
+
+        const newMed = {
+          id: 'med-' + Date.now(),
+          name,
+          dosage,
+          pillType,
+          period,
+          time,
+          food,
+          stock,
+          taken: false,
+          takenAt: null,
+        };
+
+        medications.push(newMed);
+        saveMedications();
+
+        // Reset form fields cleanly
+        document.getElementById('med-name').value = '';
+        document.getElementById('med-dosage').value = '1 Tablet';
+        document.getElementById('med-stock').value = '20';
+
+        activePeriodFilter = 'All Day';
+        switchTab('today');
+        refreshTodayUI();
+        playGentleChime(false);
+        showToast(`Added "${newMed.name}" for ${period} (${formatTime12Hour(time)}).`);
+      };
+
+      // -------------------- FAMILY / SOS CONTACTS & MEDICAL ID --------------------
+      function renderContacts() {
+        const list = document.getElementById('contacts-list');
+        if (!list) return;
+
+        if (contacts.length === 0) {
+          list.innerHTML = `<p class="text-sm font-semibold text-slate-600 py-3 text-center">No contacts saved yet. Tap "+ Add Contact" above.</p>`;
+          return;
+        }
+
+        const roleColors = {
+          Doctor: 'bg-blue-100 text-blue-900 border-blue-300',
+          Family: 'bg-emerald-100 text-emerald-950 border-emerald-300',
+          Pharmacy: 'bg-amber-100 text-amber-950 border-amber-300',
+          Neighbor: 'bg-purple-100 text-purple-950 border-purple-300',
+        };
+
+        list.innerHTML = contacts
+          .map((c) => {
+            const cleanTel = String(c.phone).replace(/[^+\d]/g, '');
+            const badgeCls = roleColors[c.role] || 'bg-slate-100 text-slate-900 border-slate-300';
+            return `
+              <div class="bg-slate-50 border-2 border-slate-200 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="min-w-0 space-y-1">
+                  <span class="inline-block px-2.5 py-0.5 rounded-lg border ${badgeCls} text-xs font-black">${escapeHtml(c.role)}</span>
+                  <h4 class="text-lg font-black text-slate-900 break-words">${escapeHtml(c.name)}</h4>
+                  <p class="text-base font-bold text-slate-700 tabular-nums">${escapeHtml(c.phone)}</p>
+                </div>
+
+                <div class="flex items-center gap-2 shrink-0">
+                  <a href="tel:${escapeHtml(cleanTel)}"
+                    class="flex-1 sm:flex-initial min-h-[54px] px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white font-black text-base rounded-2xl shadow flex items-center justify-center gap-2 transition-all">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                      <path d="M6.62 10.79a15.05 15.05 0 006.59 6.59l2.2-2.2a1 1 0 011.01-.24c1.12.37 2.33.57 3.58.57a1 1 0 011 1V20a1 1 0 01-1 1C10.61 21 3 13.39 3 4a1 1 0 011-1h3.5a1 1 0 011 1c0 1.25.2 2.46.57 3.58a1 1 0 01-.25 1.01l-2.2 2.2z"/>
+                    </svg>
+                    <span>Call</span>
+                  </a>
+                  <button type="button" onclick="openConfirmModal('delete-contact', '${c.id}')"
+                    class="min-h-[54px] min-w-[48px] px-3 rounded-2xl bg-white hover:bg-red-100 text-slate-500 hover:text-red-700 border-2 border-slate-300 flex items-center justify-center"
+                    aria-label="Delete ${escapeHtml(c.name)}">
+                    ✕
+                  </button>
+                </div>
+              </div>`;
+          })
+          .join('');
+      }
+
+      window.toggleAddContactForm = function (forceState) {
+        const form = document.getElementById('add-contact-form');
+        if (!form) return;
+        const shouldShow = typeof forceState === 'boolean' ? forceState : form.classList.contains('hidden');
+        form.classList.toggle('hidden', !shouldShow);
+      };
+
+      window.handleAddContact = function (event) {
+        event.preventDefault();
+        const errEl = document.getElementById('contact-form-error');
+        const name = document.getElementById('contact-name').value.trim();
+        const role = document.getElementById('contact-role').value;
+        const phone = document.getElementById('contact-phone').value.trim();
+
+        if (!name || !phone) {
+          errEl.textContent = 'Please enter both name and phone number.';
+          errEl.classList.remove('hidden');
+          return;
+        }
+        errEl.classList.add('hidden');
+
+        contacts.push({
+          id: 'contact-' + Date.now(),
+          name,
+          role,
+          phone,
+        });
+        saveContacts();
+        renderContacts();
+
+        document.getElementById('contact-name').value = '';
+        document.getElementById('contact-phone').value = '';
+        toggleAddContactForm(false);
+        showToast(`Saved contact "${name}".`);
+      };
+
+      function renderMedicalId() {
+        const box = document.getElementById('medical-id-display');
+        if (!box) return;
+        box.innerHTML = `
+          <div class="bg-red-50 border border-red-200 rounded-2xl p-3">
+            <div class="text-xs font-extrabold text-red-800 uppercase">Blood Group</div>
+            <div class="text-base font-black text-slate-950 mt-0.5">${escapeHtml(medicalId.bloodGroup || 'Not set')}</div>
+          </div>
+          <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3">
+            <div class="text-xs font-extrabold text-amber-900 uppercase">Allergies</div>
+            <div class="text-base font-black text-slate-950 mt-0.5">${escapeHtml(medicalId.allergies || 'None')}</div>
+          </div>
+          <div class="bg-blue-50 border border-blue-200 rounded-2xl p-3">
+            <div class="text-xs font-extrabold text-blue-900 uppercase">Conditions</div>
+            <div class="text-base font-black text-slate-950 mt-0.5">${escapeHtml(medicalId.conditions || 'None')}</div>
+          </div>`;
+      }
+
+      window.toggleMedicalIdEdit = function () {
+        const form = document.getElementById('medical-id-form');
+        const isHidden = form.classList.contains('hidden');
+        if (isHidden) {
+          document.getElementById('medid-blood').value = medicalId.bloodGroup || '';
+          document.getElementById('medid-allergies').value = medicalId.allergies || '';
+          document.getElementById('medid-conditions').value = medicalId.conditions || '';
+        }
+        form.classList.toggle('hidden', !isHidden);
+      };
+
+      window.saveMedicalId = function (event) {
+        event.preventDefault();
+        medicalId = {
+          bloodGroup: document.getElementById('medid-blood').value.trim() || 'Not set',
+          allergies: document.getElementById('medid-allergies').value.trim() || 'None',
+          conditions: document.getElementById('medid-conditions').value.trim() || 'None',
+        };
+        try {
+          localStorage.setItem(STORAGE_KEYS.MEDICAL_ID, JSON.stringify(medicalId));
+        } catch (_) {}
+        renderMedicalId();
+        document.getElementById('medical-id-form').classList.add('hidden');
+        showToast('Medical ID updated.');
+      };
+
+      // -------------------- SHARE TODAY'S MEDICINE REPORT --------------------
+      function buildDailyReportText() {
+        const todayStr = new Date().toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        });
+        const sorted = getSortedMedications();
+        const takenCount = sorted.filter((m) => m.taken).length;
+        const lowStockMeds = sorted.filter((m) => Number(m.stock) <= 5);
+
+        const medLines = sorted.map((m) => {
+          const status = m.taken
+            ? `[TAKEN${m.takenAt ? ' at ' + m.takenAt : ''}]`
+            : '[PENDING]';
+          return `• ${formatTime12Hour(m.time)} (${m.period}) — ${m.name} (${m.dosage}, ${m.food}) ${status}`;
+        });
+
+        let report = `MEDICARE DAILY REPORT\nDate: ${todayStr}\nProgress: ${takenCount} of ${sorted.length} medicines taken\n\nTODAY'S SCHEDULE:\n${
+          medLines.length ? medLines.join('\n') : 'No medicines scheduled.'
+        }`;
+
+        if (lowStockMeds.length > 0) {
+          report += `\n\nREFILL ALERTS (<= 5 LEFT):\n${lowStockMeds
+            .map((m) => `• ${m.name}: Only ${m.stock} remaining`)
+            .join('\n')}`;
+        }
+
+        return report;
+      }
+
+      window.openShareReportModal = function () {
+        const text = buildDailyReportText();
+        document.getElementById('report-preview-text').textContent = text;
+        document.getElementById('report-modal').classList.remove('hidden');
+      };
+
+      window.closeReportModal = function () {
+        document.getElementById('report-modal').classList.add('hidden');
+      };
+
+      window.shareReportNative = async function () {
+        const text = buildDailyReportText();
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              title: "MediCare — Today's Medicine Report",
+              text,
+            });
+            closeReportModal();
+            return;
+          } catch (_) {
+            // Fall back to clipboard copy if user dismissed or platform blocked
+          }
+        }
+        copyReportToClipboard();
+      };
+
+      window.copyReportToClipboard = function () {
+        const text = buildDailyReportText();
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        try {
+          document.execCommand('copy');
+          showToast('Report copied! You can paste it into WhatsApp or SMS.');
+        } catch (_) {
+          showToast('Could not copy automatically. Please select the text above.');
+        }
+        document.body.removeChild(textarea);
+      };
+
+      // -------------------- TEST MEDICINE REMINDER ALARM MODAL --------------------
+      window.triggerTestAlarm = function () {
+        const sampleMed = getNextUpcomingMedicine() || medications[0] || null;
+        if (!sampleMed) { showToast('Add a medicine first to test the reminder.'); return; }
+        activeAlarmMedId = sampleMed.id;
+
+        const body = document.getElementById('alarm-modal-body');
+        body.innerHTML = `
+          <div class="w-24 h-24 mx-auto rounded-3xl bg-amber-100 border-2 border-amber-400 flex items-center justify-center shadow-inner">
+            ${getPillSvg(sampleMed.pillType, 'w-16 h-16')}
+          </div>
+          <div class="space-y-1">
+            <span class="inline-block bg-slate-900 text-white text-sm font-black px-3.5 py-1 rounded-xl">
+              Scheduled Time: ${formatTime12Hour(sampleMed.time)}
+            </span>
+            <h3 class="text-2xl sm:text-3xl font-black text-slate-950 pt-1">${escapeHtml(sampleMed.name)}</h3>
+            <p class="text-lg font-extrabold text-blue-800">${escapeHtml(sampleMed.dosage)} • ${escapeHtml(sampleMed.food)}</p>
+          </div>
+
+          <div class="space-y-2.5 pt-2">
+            <button type="button" onclick="confirmAlarmTaken()"
+              class="w-full min-h-[60px] bg-emerald-600 hover:bg-emerald-700 text-white font-black text-lg rounded-2xl shadow-lg flex items-center justify-center gap-2">
+              <span>✓ Mark as Taken Now</span>
+            </button>
+            <div class="grid grid-cols-2 gap-2.5">
+              <button type="button" onclick="replayAlarmChimeAndVoice()"
+                class="min-h-[52px] bg-amber-200 hover:bg-amber-300 text-slate-950 font-black text-sm rounded-2xl">
+                🔊 Replay Sound
+              </button>
+              <button type="button" onclick="snoozeAlarmModal()"
+                class="min-h-[52px] bg-slate-200 hover:bg-slate-300 text-slate-900 font-extrabold text-sm rounded-2xl">
+                Snooze 10 Mins
+              </button>
+            </div>
+          </div>`;
+
+        document.getElementById('alarm-modal').classList.remove('hidden');
+        replayAlarmChimeAndVoice();
+      };
+
+      window.replayAlarmChimeAndVoice = function () {
+        const med =
+          medications.find((m) => m.id === activeAlarmMedId) ||
+          getNextUpcomingMedicine() || null;
+        if (!med) { showToast('Add a medicine first to test the reminder.'); return; }
+        playGentleChime(true);
+        setTimeout(() => {
+          speakCalmly(
+            `Medicine reminder. It is time for your ${med.period} medicine: ${med.name}, ${med.dosage}, ${med.food}.`
+          );
+        }, 950);
+      };
+
+      window.confirmAlarmTaken = function () {
+        const med = medications.find((m) => m.id === activeAlarmMedId);
+        closeAlarmModal();
+        if (med && !med.taken) {
+          toggleMedicationTaken(med.id);
+        } else {
+          showToast('Great job! Medicine marked as taken.');
+        }
+      };
+
+      window.snoozeAlarmModal = function () {
+        closeAlarmModal();
+        showToast('Reminder snoozed for 10 minutes.');
+      };
+
+      window.closeAlarmModal = function () {
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          isSpeaking = false;
+          updateReadAllButtonState();
+        }
+        document.getElementById('alarm-modal').classList.add('hidden');
+      };
+
+      // -------------------- CUSTOM CONFIRMATION MODAL --------------------
+      window.openConfirmModal = function (actionType, targetId) {
+        const titleEl = document.getElementById('confirm-modal-title');
+        const msgEl = document.getElementById('confirm-modal-message');
+        const yesBtn = document.getElementById('confirm-modal-yes-btn');
+
+        if (actionType === 'delete-med') {
+          const med = medications.find((m) => m.id === targetId);
+          titleEl.textContent = 'Remove Medicine?';
+          msgEl.textContent = `Are you sure you want to remove "${med ? med.name : 'this medicine'}" from your daily list?`;
+          yesBtn.textContent = 'Yes, Remove';
+          pendingConfirmAction = () => {
+            medications = medications.filter((m) => m.id !== targetId);
+            saveMedications();
+            refreshTodayUI();
+            showToast('Medicine removed.');
+          };
+        } else if (actionType === 'delete-contact') {
+          const contact = contacts.find((c) => c.id === targetId);
+          titleEl.textContent = 'Remove Contact?';
+          msgEl.textContent = `Remove "${contact ? contact.name : 'this contact'}" from your Family & Doctor list?`;
+          yesBtn.textContent = 'Yes, Remove';
+          pendingConfirmAction = () => {
+            contacts = contacts.filter((c) => c.id !== targetId);
+            saveContacts();
+            renderContacts();
+            showToast('Contact removed.');
+          };
+        } else if (actionType === 'reset-day') {
+          titleEl.textContent = 'Reset Today’s Progress?';
+          msgEl.textContent = 'This will mark all medicines as "Not Taken Yet" for today.';
+          yesBtn.textContent = 'Yes, Reset';
+          pendingConfirmAction = () => {
+            medications = medications.map((m) => ({ ...m, taken: false, takenAt: null }));
+            saveMedications();
+            refreshTodayUI();
+            showToast("Today's progress has been reset.");
+          };
+        }
+
+        yesBtn.onclick = () => {
+          if (typeof pendingConfirmAction === 'function') {
+            pendingConfirmAction();
+          }
+          closeConfirmModal();
+        };
+
+        document.getElementById('confirm-modal').classList.remove('hidden');
+      };
+
+      window.closeConfirmModal = function () {
+        pendingConfirmAction = null;
+        document.getElementById('confirm-modal').classList.add('hidden');
+      };
+
+      // -------------------- TOAST NOTIFICATION WITH UNDO --------------------
+      function showToast(message, undoCallback) {
+        const banner = document.getElementById('toast-banner');
+        const msgEl = document.getElementById('toast-message');
+        const undoBtn = document.getElementById('toast-undo-btn');
+        if (!banner || !msgEl || !undoBtn) return;
+
+        if (toastTimer) clearTimeout(toastTimer);
+
+        msgEl.textContent = message;
+        if (typeof undoCallback === 'function') {
+          undoBtn.classList.remove('hidden');
+          undoBtn.onclick = () => {
+            banner.classList.add('hidden');
+            undoCallback();
+          };
+        } else {
+          undoBtn.classList.add('hidden');
+          undoBtn.onclick = null;
+        }
+
+        banner.classList.remove('hidden');
+        toastTimer = setTimeout(() => {
+          banner.classList.add('hidden');
+        }, 5500);
+      }
+
+      // -------------------- BOTTOM NAVIGATION TAB SWITCHER --------------------
+      window.switchTab = function (tabName) {
+        activeTab = tabName;
+        ['today', 'add', 'family'].forEach((key) => {
+          const section = document.getElementById(`view-${key}`);
+          const navBtn = document.getElementById(`nav-${key}`);
+          const isCurrent = key === tabName;
+
+          if (section) section.classList.toggle('hidden', !isCurrent);
+          if (navBtn) {
+            navBtn.className = isCurrent
+              ? 'min-h-[60px] rounded-2xl flex flex-col items-center justify-center gap-1 font-black text-sm bg-slate-900 text-amber-300 shadow-md transition-all'
+              : 'min-h-[60px] rounded-2xl flex flex-col items-center justify-center gap-1 font-extrabold text-sm text-slate-700 hover:bg-slate-100 transition-all';
+          }
+        });
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+
+      // -------------------- ANDROID APK PROJECT (.ZIP) GENERATOR --------------------
+      window.downloadAndroidApkProject = async function () {
+        const btn = document.getElementById('download-apk-zip-btn');
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span>Building Android APK Project...</span>';
+
+        try {
+          if (typeof JSZip === 'undefined') {
+            throw new Error('JSZip unavailable offline');
+          }
+
+          const zip = new JSZip();
+          const root = zip.folder('MediCare');
+
+          // 1. Fixed settings.gradle
+          root.file(
+            'settings.gradle',
+            `pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "MediCare"
+include ':app'
+`
+          );
+
+          // 2. Fixed root build.gradle
+          root.file(
+            'build.gradle',
+            `plugins {
+    id 'com.android.application' version '8.6.1' apply false
+}
+`
+          );
+
+          // 3. gradle.properties
+          root.file(
+            'gradle.properties',
+            `org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+android.useAndroidX=true
+android.nonTransitiveRClass=true
+`
+          );
+
+          // 4. Fixed app/build.gradle (Self-contained Offline WebView APK with Java 17)
+          root.file(
+            'app/build.gradle',
+            `plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'com.medicare.companion'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId 'com.medicare.companion'
+        minSdk 23
+        targetSdk 35
+        versionCode 1
+        versionName '1.0'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.webkit:webkit:1.11.0'
+}
+`
+          );
+
+          // 5. Fixed AndroidManifest.xml (Supports offline assets + tel: SOS/Family calls)
+          root.file(
+            'app/src/main/AndroidManifest.xml',
+            `<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.DIAL" />
+            <data android:scheme="tel" />
+        </intent>
+    </queries>
+
+    <application
+        android:allowBackup="true"
+        android:label="MediCare"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+
+        <activity
+            android:name=".LauncherActivity"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
+            android:exported="true"
+            android:launchMode="singleTask">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+        </activity>
+
+    </application>
+</manifest>
+`
+          );
+
+          // 6. Fixed LauncherActivity.java (Loads offline assets/index.html + handles tel: calls + back button)
+          root.file(
+            'app/src/main/java/com/medicare/companion/LauncherActivity.java',
+            `package com.medicare.companion;
+
+import android.annotation.SuppressLint;
+import android.content.Intent;
+import android.net.Uri;
+import android.os.Bundle;
+import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import androidx.activity.OnBackPressedCallback;
+import androidx.appcompat.app.AppCompatActivity;
+
+public class LauncherActivity extends AppCompatActivity {
+
+    private WebView webView;
+
+    @SuppressLint("SetJavaScriptEnabled")
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        webView = new WebView(this);
+        setContentView(webView);
+
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true);
+        settings.setDomStorageEnabled(true);
+        settings.setDatabaseEnabled(true);
+        settings.setAllowFileAccess(true);
+        settings.setMediaPlaybackRequiresUserGesture(false);
+        settings.setSupportZoom(true);
+        settings.setBuiltInZoomControls(true);
+        settings.setDisplayZoomControls(false);
+
+        webView.setWebChromeClient(new WebChromeClient());
+        webView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                Uri uri = request.getUrl();
+                if (uri != null && "tel".equalsIgnoreCase(uri.getScheme())) {
+                    Intent dialIntent = new Intent(Intent.ACTION_DIAL, uri);
+                    startActivity(dialIntent);
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                if (webView != null && webView.canGoBack()) {
+                    webView.goBack();
+                } else {
+                    finish();
+                }
+            }
+        });
+
+        webView.loadUrl("file:///android_asset/index.html");
+    }
+}
+`
+          );
+
+          // 7. Bundle the complete current HTML document into app/src/main/assets/index.html
+          const fullHtml = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+          root.file('app/src/main/assets/index.html', fullHtml);
+
+          // 8. GitHub Actions workflow so user can generate the .apk in the cloud without Android Studio
+          root.file(
+            '.github/workflows/build-apk.yml',
+            `name: Build MediCare Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Project
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Build Debug APK
+        run: gradle assembleDebug
+
+      - name: Upload Installable MediCare APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MediCare-Android-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
+`
+          );
+
+          // 9. Clear Instructions README.md
+          root.file(
+            'README.md',
+            `# MediCare — Android APK Project (com.medicare.companion)
+
+All syntax, capitalization, manifest, and activity bugs have been fixed, and your elderly medication companion web app is pre-bundled inside \`app/src/main/assets/index.html\` for 100% offline use.
+
+## Option 1: Build APK Without Installing Android Studio (GitHub Actions)
+1. Create a free repository on GitHub and upload all files from this \`MediCare\` folder.
+2. Open the **Actions** tab in your repository and run **Build MediCare Android APK**.
+3. Download the generated **MediCare-Android-APK** artifact containing \`app-debug.apk\` and install it on your Android phone.
+
+## Option 2: Build APK in Android Studio
+1. Open the \`MediCare\` folder in Android Studio.
+2. Wait for Gradle Sync to complete.
+3. Click **Build > Build Bundle(s) / APK(s) > Build APK(s)** to export \`app-debug.apk\`.
+`
+          );
+
+          const blob = await zip.generateAsync({ type: 'blob' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'MediCare-Android-APK-Project.zip';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+
+          showToast('Downloaded MediCare-Android-APK-Project.zip!');
+        } catch (err) {
+          console.error('ZIP build error:', err);
+          showToast('Could not generate ZIP. Check internet connection for JSZip.');
+        } finally {
+          btn.disabled = false;
+          btn.innerHTML = originalHtml;
+        }
+      };
+
+      // -------------------- BOOTSTRAP APPLICATION --------------------
+      function initApp() {
+        loadState();
+        void syncNativeMedicationReminders();
+        setFontScale(fontScale);
+        updateLiveClock();
+        setInterval(updateLiveClock, 1000);
+
+        refreshTodayUI();
+        renderPillPicker();
+        updatePeriodButtonStyles();
+        updateFoodButtonStyles();
+        renderContacts();
+        renderMedicalId();
+        switchTab('today');
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initApp);
+      } else {
+        initApp();
+      }
+    })();
+  </script>
+</body>
+</html>

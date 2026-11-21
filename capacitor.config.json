@@ -1,0 +1,6 @@
+{
+  "appId": "com.medicare.elderlycompanion",
+  "appName": "MediCare",
+  "webDir": "www",
+  "bundledWebRuntime": false
+}
