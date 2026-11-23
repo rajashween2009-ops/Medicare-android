@@ -7,27 +7,7 @@
   <meta name="description" content="MediCare — Extra-large, high-contrast daily medication companion designed for seniors." />
   <title>MediCare — Daily Medication Companion</title>
 
-  <!-- Load Inter Font -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-
-  <!-- Load Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-          },
-        },
-      },
-    };
-  </script>
-
-  <!-- Load JSZip for Instant Android APK Project Packaging -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+  <link rel="stylesheet" href="./styles.css" />
 </head>
 
 <body class="bg-slate-100 text-slate-900 font-sans antialiased selection:bg-blue-200 selection:text-slate-950 min-h-screen overflow-x-hidden">
@@ -550,7 +530,7 @@
   </div>
 
   <!-- ==================== APPLICATION LOGIC ==================== -->
-  <script src="native-notifications.bundle.js" defer></script>
+  <script src="native-notifications.bundle.js"></script>
   <script>
     (function () {
       'use strict';
