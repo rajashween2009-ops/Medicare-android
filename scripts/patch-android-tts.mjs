@@ -39,7 +39,8 @@ public class MainActivity extends BridgeActivity {
                 @JavascriptInterface
                 public void speak(String text) {
                     if (tts != null && ttsReady && text != null && !text.isEmpty()) {
-                        tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "medicare_utterance");
+                        String safeText = text.length() > 1000 ? text.substring(0, 1000) : text;
+                        tts.speak(safeText, TextToSpeech.QUEUE_FLUSH, null, "medicare_utterance");
                     }
                 }
 
