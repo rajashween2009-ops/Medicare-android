@@ -2,5 +2,12 @@
   "appId": "com.medicare.elderlycompanion",
   "appName": "MediCare",
   "webDir": "www",
-  "bundledWebRuntime": false
+  "bundledWebRuntime": false,
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_medicare",
+      "iconColor": "#0F766E",
+      "sound": "default"
+    }
+  }
 }
