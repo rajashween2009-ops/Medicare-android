@@ -22,8 +22,20 @@ const missing = perms
 
 if (missing.length > 0) {
   xml = xml.slice(0, appIdx) + missing.join('\n') + '\n\n    ' + xml.slice(appIdx);
-  fs.writeFileSync(manifestPath, xml, 'utf8');
-  console.log('Added permissions:', missing.length);
-} else {
-  console.log('All required permissions already present.');
 }
+
+// Harden <application> attributes: disable unencrypted cleartext traffic and ADB backups
+if (xml.includes('android:allowBackup="true"')) {
+  xml = xml.replace('android:allowBackup="true"', 'android:allowBackup="false"');
+} else if (!xml.includes('android:allowBackup=')) {
+  xml = xml.replace('<application', '<application\n        android:allowBackup="false"');
+}
+
+if (xml.includes('android:usesCleartextTraffic="true"')) {
+  xml = xml.replace('android:usesCleartextTraffic="true"', 'android:usesCleartextTraffic="false"');
+} else if (!xml.includes('android:usesCleartextTraffic=')) {
+  xml = xml.replace('<application', '<application\n        android:usesCleartextTraffic="false"');
+}
+
+fs.writeFileSync(manifestPath, xml, 'utf8');
+console.log('Patched AndroidManifest.xml with permissions and security hardening.');
