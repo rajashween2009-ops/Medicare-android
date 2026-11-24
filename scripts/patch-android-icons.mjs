@@ -1,16 +1,27 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import zlib from 'node:zlib';
 
 const androidDir = process.argv[2] || 'android';
 const resDir = path.join(androidDir, 'app', 'src', 'main', 'res');
 if (!fs.existsSync(resDir)) throw new Error(`Android res dir not found: ${resDir}`);
+
+// 1. Remove Capacitor's drawable-v24 foreground overrides that hide custom icons on Android 7+
+const v24Dir = path.join(resDir, 'drawable-v24');
+if (fs.existsSync(v24Dir)) {
+  for (const f of fs.readdirSync(v24Dir)) {
+    if (f.includes('ic_launcher_foreground')) {
+      fs.unlinkSync(path.join(v24Dir, f));
+    }
+  }
+}
 
 const drawableDir = path.join(resDir, 'drawable');
 const anydpiDir = path.join(resDir, 'mipmap-anydpi-v26');
 fs.mkdirSync(drawableDir, { recursive: true });
 fs.mkdirSync(anydpiDir, { recursive: true });
 
-// Adaptive icon background (Deep Teal #0F766E)
+// 2. Adaptive icon background & foreground vectors
 fs.writeFileSync(path.join(drawableDir, 'ic_launcher_background.xml'), `<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -21,7 +32,6 @@ fs.writeFileSync(path.join(drawableDir, 'ic_launcher_background.xml'), `<?xml ve
 </vector>
 `);
 
-// Adaptive icon foreground (MediCare shield + crisp white medical cross)
 fs.writeFileSync(path.join(drawableDir, 'ic_launcher_foreground.xml'), `<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -40,7 +50,6 @@ fs.writeFileSync(path.join(drawableDir, 'ic_launcher_foreground.xml'), `<?xml ve
 </vector>
 `);
 
-// Monochrome status-bar notification icon (ic_stat_medicare)
 fs.writeFileSync(path.join(drawableDir, 'ic_stat_medicare.xml'), `<?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
@@ -53,7 +62,6 @@ fs.writeFileSync(path.join(drawableDir, 'ic_stat_medicare.xml'), `<?xml version=
 </vector>
 `);
 
-// Adaptive launcher icon XMLs
 const launcherXml = `<?xml version="1.0" encoding="utf-8"?>
 <adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
     <background android:drawable="@drawable/ic_launcher_background" />
@@ -62,4 +70,71 @@ const launcherXml = `<?xml version="1.0" encoding="utf-8"?>
 `;
 fs.writeFileSync(path.join(anydpiDir, 'ic_launcher.xml'), launcherXml);
 fs.writeFileSync(path.join(anydpiDir, 'ic_launcher_round.xml'), launcherXml);
-console.log('Installed MediCare launcher & notification icons.');
+
+// 3. Also overwrite legacy mipmap PNGs across all densities
+function crc32(buf) {
+  let c = 0xffffffff;
+  for (let i = 0; i < buf.length; i++) {
+    c ^= buf[i];
+    for (let k = 0; k < 8; k++) c = (c >>> 1) ^ (c & 1 ? 0xedb88320 : 0);
+  }
+  return (c ^ 0xffffffff) >>> 0;
+}
+function pngChunk(type, data) {
+  const len = Buffer.alloc(4);
+  len.writeUInt32BE(data.length, 0);
+  const t = Buffer.from(type, 'ascii');
+  const crc = Buffer.alloc(4);
+  crc.writeUInt32BE(crc32(Buffer.concat([t, data])), 0);
+  return Buffer.concat([len, t, data, crc]);
+}
+function makeIconPng(size, round = false, transparentBg = false) {
+  const raw = Buffer.alloc((size * 4 + 1) * size);
+  const cx = size / 2, cy = size / 2, r = size * 0.46;
+  const armW = size * 0.14, armL = size * 0.50;
+  for (let y = 0; y < size; y++) {
+    const rowStart = y * (size * 4 + 1);
+    raw[rowStart] = 0;
+    for (let x = 0; x < size; x++) {
+      const px = rowStart + 1 + x * 4;
+      const dx = x + 0.5 - cx, dy = y + 0.5 - cy;
+      let inside = true;
+      if (round) inside = (dx * dx + dy * dy) <= r * r;
+      else {
+        const corner = size * 0.20, ax = Math.abs(dx), ay = Math.abs(dy), half = size * 0.46;
+        if (ax > half || ay > half) inside = false;
+        else if (ax > half - corner && ay > half - corner) {
+          const cdx = ax - (half - corner), cdy = ay - (half - corner);
+          inside = (cdx * cdx + cdy * cdy) <= corner * corner;
+        }
+      }
+      const inCross = (Math.abs(dx) <= armW / 2 && Math.abs(dy) <= armL / 2) ||
+                      (Math.abs(dy) <= armW / 2 && Math.abs(dx) <= armL / 2);
+      if (inCross) {
+        raw[px] = 255; raw[px + 1] = 255; raw[px + 2] = 255; raw[px + 3] = 255;
+      } else if (!inside || transparentBg) {
+        raw[px] = 0; raw[px + 1] = 0; raw[px + 2] = 0; raw[px + 3] = 0;
+      } else {
+        raw[px] = 15; raw[px + 1] = 118; raw[px + 2] = 110; raw[px + 3] = 255;
+      }
+    }
+  }
+  const ihdr = Buffer.alloc(13);
+  ihdr.writeUInt32BE(size, 0); ihdr.writeUInt32BE(size, 4); ihdr[8] = 8; ihdr[9] = 6;
+  return Buffer.concat([
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    pngChunk('IHDR', ihdr),
+    pngChunk('IDAT', zlib.deflateSync(raw)),
+    pngChunk('IEND', Buffer.alloc(0))
+  ]);
+}
+
+const densities = { mdpi: 48, hdpi: 72, xhdpi: 96, xxhdpi: 144, xxxhdpi: 192 };
+for (const [d, sz] of Object.entries(densities)) {
+  const dir = path.join(resDir, `mipmap-${d}`);
+  if (!fs.existsSync(dir)) continue;
+  fs.writeFileSync(path.join(dir, 'ic_launcher.png'), makeIconPng(sz, false, false));
+  fs.writeFileSync(path.join(dir, 'ic_launcher_round.png'), makeIconPng(sz, true, false));
+  fs.writeFileSync(path.join(dir, 'ic_launcher_foreground.png'), makeIconPng(Math.round(sz * 1.5), false, true));
+}
+console.log('Replaced all Android launcher & notification icons with MediCare logo.')
