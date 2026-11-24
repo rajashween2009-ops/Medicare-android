@@ -4,10 +4,6 @@ on:
   workflow_dispatch:
   push:
     branches: [ "main" ]
-    paths:
-      - '**.zip'
-      - '.github/workflows/build-android.yml'
-      - 'scripts/**'
 
 permissions:
   contents: read
@@ -18,14 +14,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Find and extract Android project
-        run: |
-          mkdir -p source
-          ZIP=$(find . -maxdepth 1 -iname '*.zip' | head -1)
-          test -n "$ZIP"
-          unzip -q "$ZIP" -d source
-          find source -name settings.gradle -o -name settings.gradle.kts
-
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -33,43 +21,35 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: '17'
+          java-version: '21'
 
-      - name: Install Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
+      - uses: android-actions/setup-android@v3
 
-      - uses: gradle/actions/setup-gradle@v4
-        with:
-          gradle-version: '8.7'
+      - name: Install dependencies
+        run: npm install
 
-      - name: Locate project
-        id: project
+      - name: Build offline CSS & native notification bridge
         run: |
-          FILE=$(find source -name settings.gradle -o -name settings.gradle.kts | head -1)
-          test -n "$FILE"
-          echo "dir=$(dirname "$FILE")" >> "$GITHUB_OUTPUT"
+          npx tailwindcss -i www/input.css -o www/styles.css --content "www/index.html" --minify
+          npx esbuild www/native-notifications.js --bundle --platform=browser --format=iife --outfile=www/native-notifications.bundle.js
 
-      - name: Patch Kotlin dependency conflict & Android permissions
+      - name: Add Android platform & apply patches
         run: |
-          node scripts/patch-android-gradle.mjs "${{ steps.project.outputs.dir }}"
-          MANIFEST="${{ steps.project.outputs.dir }}/app/src/main/AndroidManifest.xml"
-          if [ -f "$MANIFEST" ]; then
-            for PERM in RECEIVE_BOOT_COMPLETED SCHEDULE_EXACT_ALARM POST_NOTIFICATIONS WAKE_LOCK VIBRATE; do
-              if ! grep -q "android.permission.$PERM" "$MANIFEST"; then
-                sed -i "s|<application|<uses-permission android:name=\"android.permission.$PERM\" />\n    <application|" "$MANIFEST"
-              fi
-            done
-          fi
+          npx cap add android
+          node scripts/patch-android-manifest.mjs
+          node scripts/patch-android-gradle.mjs android
+          node scripts/patch-android-icons.mjs android
+          npx cap sync android
 
-      - name: Build APK
-        working-directory: ${{ steps.project.outputs.dir }}
-        run: gradle --no-daemon assembleDebug
+      - name: Build Debug APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug
 
       - name: Upload MediCare APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: MediCare-Android-APK
-          path: ${{ steps.project.outputs.dir }}/app/build/outputs/apk/debug/app-debug.apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
