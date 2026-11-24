@@ -6,7 +6,7 @@ on:
     branches: [ "main" ]
 
 permissions:
-  contents: read
+  contents: write 
 
 jobs:
   build:
@@ -59,3 +59,7 @@ jobs:
           name: MediCare-Android-APK
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk MediCare.apk && gh release create "v1.0.${{ github.run_number }}" MediCare.apk --title "MediCare Android v1.0.${{ github.run_number }}" --notes "Automated build from run #${{ github.run_number }}" --target "${{ github.sha }}"
