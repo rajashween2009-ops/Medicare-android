@@ -23,13 +23,18 @@ jobs:
           distribution: temurin
           java-version: '21'
 
-      - uses: android-actions/setup-android@v3
+      - name: Install Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
 
       - name: Install dependencies
         run: npm install
 
-      - name: Build offline CSS & native notification bridge
+      - name: Sync UI from medicare-android.netlify.app & build offline bundle
         run: |
+          curl -fsSL https://medicare-android.netlify.app/ -o www/index.html
+          node scripts/patch-offline-ui.mjs
           npx tailwindcss -i www/input.css -o www/styles.css --content "www/index.html" --minify
           npx esbuild www/native-notifications.js --bundle --platform=browser --format=iife --outfile=www/native-notifications.bundle.js
 
