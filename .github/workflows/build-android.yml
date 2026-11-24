@@ -44,6 +44,7 @@ jobs:
           node scripts/patch-android-manifest.mjs
           node scripts/patch-android-gradle.mjs android
           node scripts/patch-android-icons.mjs android
+          node scripts/patch-android-tts.mjs android
           npx cap sync android
 
       - name: Build Debug APK
