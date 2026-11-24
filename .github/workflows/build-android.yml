@@ -62,4 +62,4 @@ jobs:
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk MediCare.apk && gh release create "v1.0.${{ github.run_number }}" MediCare.apk --title "MediCare Android v1.0.${{ github.run_number }}" --notes "Automated build from run #${{ github.run_number }}" --target "${{ github.sha }}"
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk MediCare.apk && gh release create "v1.0.${{ github.run_number }}" MediCare.apk --title "MediCare Android v1.0.${{ github.run_number }}" --notes "Automated build from run ${{ github.run_number }}" --target "${{ github.sha }}"
