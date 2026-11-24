@@ -178,6 +178,45 @@ if (!html.includes('ANDROID_CHANNEL_ID')) {
   html = html.replace("showToast('Reminder snoozed for 10 minutes.');", "scheduleNativeOneOffNotification(cur.medId, cur.time, 600, cur.isTest);\n          showToast('Reminder snoozed for 10 minutes.');");
   html = html.replace("tickClockAndReminders();", "tickClockAndReminders();\n        initNativeAndroidNotifications();");
 }
+const oldSpeak = `      function speakCalmly(text) {
+        if (!state.prefs.voice) return;
+        try {
+          if (!('speechSynthesis' in window)) return;
+          window.speechSynthesis.cancel();
+          const utter = new SpeechSynthesisUtterance(text);
+          utter.rate = 0.88;
+          utter.pitch = 1.0;
+          utter.volume = 1.0;
+          window.speechSynthesis.speak(utter);
+        } catch (e) {
+          // Speech synthesis unavailable
+        }
+      }`;
+
+const newSpeak = `      function speakCalmly(text) {
+        if (!state.prefs.voice) return;
+        try {
+          if (window.MediCareAndroidTTS && typeof window.MediCareAndroidTTS.speak === 'function') {
+            window.MediCareAndroidTTS.speak(String(text || ''));
+            return;
+          }
+          if (!('speechSynthesis' in window)) return;
+          window.speechSynthesis.cancel();
+          const utter = new SpeechSynthesisUtterance(text);
+          utter.rate = 0.88;
+          utter.pitch = 1.0;
+          utter.volume = 1.0;
+          window.speechSynthesis.speak(utter);
+        } catch (e) {}
+      }`;
+
+if (html.includes(oldSpeak)) {
+  html = html.replace(oldSpeak, newSpeak);
+}
+html = html.replace(
+  "if ('speechSynthesis' in window) window.speechSynthesis.cancel();",
+  "if (window.MediCareAndroidTTS && typeof window.MediCareAndroidTTS.stop === 'function') window.MediCareAndroidTTS.stop();\n          if ('speechSynthesis' in window) window.speechSynthesis.cancel();"
+);
 
 fs.writeFileSync(htmlPath, html, 'utf8');
 console.log('Patched www/index.html for offline Android + native notifications.');
